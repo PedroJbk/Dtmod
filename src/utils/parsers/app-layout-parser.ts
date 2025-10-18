@@ -97,13 +97,17 @@ export const AppLayoutParserApi = (AppLayout: any) => {
       };
     }
 
-    AppLayoutStorage.user_id = AppLayout.user_id;
+    //AppLayoutStorage.user_id = AppLayout.user_id;
+    delete AppLayoutStorage.id;
+    delete AppLayoutStorage.label;
+    delete AppLayoutStorage.status;
 
-    return JSON.stringify({ ...AppLayoutStorage });
+    return AppLayoutStorage;
   });
 
-  if (APP_BACKGROUND_TYPE === 'COLOR')
-    response[APP_BACKGROUND_IMAGE] = JSON.stringify({ ...JSON.parse(response[APP_BACKGROUND_IMAGE]), value: null });
+  if (APP_BACKGROUND_TYPE === 'COLOR') {
+    response[APP_BACKGROUND_IMAGE] = { ...response[APP_BACKGROUND_IMAGE], value: null };
+  }
 
   return response;
 };

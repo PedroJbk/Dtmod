@@ -21,7 +21,9 @@ export default {
 
     const usernameAlreadyExists = await SafeCallback(() =>
       prisma.user.findFirst({
-        where: { username },
+        where: {
+          username: username.toLowerCase(),
+        },
       })
     );
 
@@ -40,7 +42,7 @@ export default {
     if (emailAlreadyExists) {
       reply.status(409);
       reply.header('csrf-token', req.csrfProtection.generateCsrf());
-      throw new Error('Email já cadastrado');
+      throw new Error('Ja existe uma conta com esse e-mail');
     }
 
     const passwordHash = BCrypt.hash(password);
@@ -71,6 +73,6 @@ export default {
       );
     }
 
-    reply.status(201).send();
+    reply.status(201).send({});
   },
 } as RouteOptions;

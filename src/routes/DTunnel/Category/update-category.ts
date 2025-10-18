@@ -39,6 +39,15 @@ export default {
       throw new Error('Não foi possível editar essa categoria');
     }
 
+    await SafeCallback(async () => {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+          app_config_version: { increment: 1 },
+        },
+      });
+    });
+
     reply.send({ status: 200 });
   },
 } as RouteOptions;

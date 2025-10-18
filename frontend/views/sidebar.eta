@@ -16,6 +16,12 @@
       </a>
     </li>
     <li class="nav-item">
+      <a href="/cdn" target="_self" class="nav-link text-white <%~ it.active === 'cdn' ? 'active' : '' %>">
+        <i class="bi bi-cloud"></i>
+        <span>CDN</span>
+      </a>
+    </li>
+    <li class="nav-item">
       <a href="/categories" target="_self" class="nav-link text-white <%~ it.active === 'categories' ? 'active' : '' %>">
         <i class="bi bi-bookmark"></i>
         <span>Categorias</span>
@@ -37,12 +43,6 @@
       <a href="/texts" target="_self" class="nav-link text-white <%~ it.active === 'texts' ? 'active' : '' %>">
         <i class="bi bi-file-text"></i>
         <span>Textos</span>
-      </a>
-    </li>
-    <li class="nav-item d-flex">
-      <a class="btn nav-link text-white text-start" onclick="swithTheme()">
-        <i class="bi bi-moon"></i>
-        <span>Modo escuro</span>
       </a>
     </li>
     <li class="nav-item">

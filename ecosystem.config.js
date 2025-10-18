@@ -3,7 +3,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 
 const cpus = os.cpus().length;
-const instances = (cpus > 2) ? Math.floor(cpus / 2) : 1;
+const instances = cpus > 2 ? Math.floor(cpus / 2) : 1;
 
 dotenv.config({
   path: path.resolve(__dirname, '.env'),

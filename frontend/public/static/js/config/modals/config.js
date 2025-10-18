@@ -46,7 +46,6 @@ export default class ModalConfigForm {
     configureMode(config, categories) {
         this.mode.setOnChange(() => {
             config.mode = this.mode.getSelected().value;
-
             this.form = ConfigFormFactory.create(config.mode, config, categories)
             this.mode = this.form.mode;
 

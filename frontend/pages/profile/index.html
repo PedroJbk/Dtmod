@@ -17,7 +17,6 @@
   <link rel="stylesheet" href="../static/css/bootstrap.css">
   <link rel="stylesheet" href="../static/css/sidebar.css">
   <link rel="stylesheet" href="../static/css/header.css">
-  <script src="../static/js/dark_light.js"></script>
   <script src="//code.jquery.com/jquery-2.1.0.min.js"></script>
   <meta name="csrf-token" content="<%= it.csrfToken %>">
 </head>
@@ -38,12 +37,15 @@
                 </div>
               </div>
               <div class="row mt-2">
-                <div class="col-md-6 mb-3">
-                  <div class="mb-3">
+                <div class="col-md-12 mb-3">
+                  <div class="mb-5">
                     <label for="id" class="form-label">ID</label>
                     <div class="input-group">
                       <i class="input-group-text bi bi-key-fill"></i>
                       <input type="text" class="form-control" id="id" name="id" value="<%= it.user.id %>" readonly>
+                      <button class="input-group-text  border border-1" type="button" onclick="copyToken()">
+                        <i class="bi bi-clipboard"></i>
+                      </button>
                     </div>
                   </div>
                   <div class="mb-3">
@@ -84,13 +86,6 @@
                     <button type="submit" class="btn btn-dark w-100 __btn__save">Salvar</button>
                   </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                  <label for="email" class="form-label">Credenciais</label>
-                  <textarea class="form-control mb-3" id="credentials" style="height: 180px;" name="credentials" readonly></textarea>
-                  <div class="d-flex justify-content-center ">
-                    <button type="submit" class="btn btn-dark w-100 __btn__copy">Copiar</button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -107,24 +102,18 @@
   <script src="../static/js/utils.js"></script>
 
   <script>
-    const user_id = '<%= it.user.id %>'
-    const token = '<%= it.user.id %>'
-    let csrfToken = getCsrfTokenHead();
 
-    const credentials = document.getElementById('credentials')
-    credentials.value = JSON.stringify({
-      user_id,
-      token,
-    }, null, 4)
 
-    const copyBtn = document.querySelector('.__btn__copy')
-    copyBtn.addEventListener('click', () => {
+    function copyToken() {
+      const credentials = document.querySelector('#id')
       credentials.select()
       credentials.setSelectionRange(0, 99999)
       document.execCommand('copy')
       document.getSelection().removeAllRanges()
       showToastSuccess('Copiado com sucesso!')
-    })
+    }
+
+    let csrfToken = getCsrfTokenHead();
 
     const btnSave = document.querySelector('.__btn__save')
     btnSave.addEventListener('click', async () => {
@@ -195,6 +184,8 @@
       }
     }
   </script>
+
+  <script src="../static/js/dark_light.js"></script>
 </body>
 
 </html>

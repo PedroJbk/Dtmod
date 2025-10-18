@@ -44,6 +44,15 @@ export default {
       );
     }
 
+    await SafeCallback(async () => {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+          app_layout_version: { increment: 1 },
+        },
+      });
+    });
+
     reply.send({});
   },
 } as RouteOptions;

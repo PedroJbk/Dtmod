@@ -3,12 +3,14 @@ import { z } from 'zod';
 const mode = z.enum([
   'SSH_DIRECT',
   'SSH_PROXY',
+  'SSH_DNSTT',
   'SSL_DIRECT',
   'SSL_PROXY',
   'OVPN_PROXY',
   'OVPN_SSL',
   'OVPN_SSL_PROXY',
   'V2RAY',
+  'HYSTERIA',
 ]);
 
 export const CategorySchema = z.object({
@@ -65,6 +67,15 @@ export const AppConfigSchema = z.object({
     })
     .optional()
     .nullable(),
+  dnstt_key: z.string().optional().nullable(),
+  dnstt_name_server: z.string().optional().nullable(),
+  dnstt_server: z.string().optional().nullable(),
+  hy_obfs: z.string().optional().nullable(),
+  hy_insecure: z.boolean().optional().nullable(),
+  hy_port: z.string().optional().nullable(),
+  hy_up_mbps: z.number().optional().nullable(),
+  hy_down_mbps: z.number().optional().nullable(),
+  hy_version: z.number().optional().nullable(),
   tls_version: z.enum(['TLSv1.3', 'TLSv1.2', 'TLSv1.1']).optional().nullable(),
   udp_ports: z.array(z.number()).optional().nullable(),
   url_check_user: z.string(),
@@ -95,6 +106,15 @@ export const AppConfigSelect = {
   proxy_port: true,
   server_host: true,
   server_port: true,
+  dnstt_key: true,
+  dnstt_name_server: true,
+  dnstt_server: true,
+  hy_obfs: true,
+  hy_insecure: true,
+  hy_port: true,
+  hy_up_mbps: true,
+  hy_down_mbps: true,
+  hy_version: true,
   sorter: true,
   status: true,
   tls_version: true,
@@ -102,7 +122,7 @@ export const AppConfigSelect = {
   created_at: true,
   udp_ports: true,
   url_check_user: true,
-  user_id: true,
+  user_id: false,
 };
 
 export const getDateCreateAppConfig = (appconfig: z.infer<typeof AppConfigSchema>) => {
@@ -126,8 +146,17 @@ export const getDateCreateAppConfig = (appconfig: z.infer<typeof AppConfigSchema
     proxy_port: appconfig.proxy?.port,
     server_host: appconfig.server?.host,
     server_port: appconfig.server?.port,
+    dnstt_key: appconfig.dnstt_key ? appconfig.dnstt_key : '',
+    dnstt_name_server: appconfig.dnstt_name_server ? appconfig.dnstt_name_server : '',
+    dnstt_server: appconfig.dnstt_server ? appconfig.dnstt_server : '',
+    hy_obfs: appconfig.hy_obfs ? appconfig.hy_obfs : '',
+    hy_insecure: appconfig.hy_insecure ? appconfig.hy_insecure : true,
+    hy_port: appconfig.hy_port ? appconfig.hy_port : '13375',
+    hy_up_mbps: appconfig.hy_up_mbps ? appconfig.hy_up_mbps : 100,
+    hy_down_mbps: appconfig.hy_down_mbps ? appconfig.hy_down_mbps : 150,
+    hy_version: appconfig.hy_version ? appconfig.hy_version : 1,
     tls_version: appconfig.tls_version,
-    udp_ports: appconfig.udp_ports?.join(',') ?? null,
+    udp_ports: appconfig.udp_ports?.join(',') ?? '7300',
     url_check_user: appconfig.url_check_user,
   };
 };

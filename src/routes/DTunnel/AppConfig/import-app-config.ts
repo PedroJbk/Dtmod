@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import prisma from '../../../config/prisma-client';
+import SafeCallback from '../../../utils/safe-callback';
 import Authentication from '../../../middlewares/authentication';
 import { ConvertFromHexAARRGGBB } from '../../../utils/convert-color';
 import { FastifyReply, FastifyRequest, RouteOptions } from 'fastify';
@@ -63,6 +64,15 @@ export default {
         },
       });
     }
+
+    await SafeCallback(async () => {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+          app_config_version: { increment: 1 },
+        },
+      });
+    });
 
     reply.status(201).send({ status: 200 });
   },

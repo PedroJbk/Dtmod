@@ -129,6 +129,7 @@ export class ConfigName extends TextFiled {
         this._element.value = name
         this._element.required = true
         this._label.innerHTML = 'Nome'
+        this._element.placeholder = 'Ex: Nome';
     }
 
     validate() {
@@ -143,6 +144,7 @@ export class ConfigDesc extends TextFiled {
         super()
         this._element.value = desc
         this._label.innerHTML = 'Descrição'
+        this._element.placeholder = 'Ex: Descrição';
     }
 
     setName(name) {
@@ -159,19 +161,22 @@ export class ConfigOrder extends NumberFiled {
         super()
         this._element.value = order
         this._label.innerHTML = 'Ordem'
+        this._element.placeholder = 'Ex: 1';
     }
 }
 
 export class ConfigSni extends TextFiled {
-    constructor(sni) {
+    constructor(sni, optional = false) {
         super()
         this._element.value = sni
+        this._optional = optional;
         this._label.innerHTML = 'SNI'
+        this._element.placeholder = 'Ex: google.com.br';
     }
 
     validate() {
-        if (!this.getValue()) {
-            throw new Error('Defina uma SNI para configuração')
+        if (!this.getValue() && !this._optional) {
+            throw new Error('Defina uma SNI para configuração');
         }
     }
 }
@@ -181,6 +186,7 @@ export class ConfigPayload extends TextAreaFiled {
         super()
         this._element.value = payload
         this._label.innerText = 'PAYLOAD'
+        this._element.placeholder = 'GET / HTTP/1.1[crlf]Host: google.com[crlf][crlf]';
     }
 
     validate() {
@@ -223,6 +229,7 @@ export class ConfigProxy extends TextFiled {
         super()
         this._element.value = proxy
         this._label.innerHTML = 'Proxy'
+        this._element.placeholder = 'Ex: 127.0.0.1';
     }
 
     validate() {
@@ -237,6 +244,7 @@ export class ConfigServer extends TextFiled {
         super()
         this._element.value = server
         this._label.innerHTML = 'Servidor'
+        this._element.placeholder = 'Ex: 127.0.0.1';
     }
 
     validate() {
@@ -251,6 +259,7 @@ export class ConfigPort extends NumberFiled {
         super()
         this._element.value = port
         this._label.innerHTML = 'Porta'
+        this._element.placeholder = 'Ex: 80';
     }
 
     validate() {
@@ -265,6 +274,7 @@ export class ConfigDns1 extends TextFiled {
         super()
         this._element.value = dns
         this._label.innerHTML = 'DNS 1'
+        this._element.placeholder = 'Ex: 8.8.8.8';
     }
 
     validate() {
@@ -293,6 +303,7 @@ export class ConfigUsername extends TextFiled {
         super()
         this._element.value = username
         this._label.innerHTML = 'Nome de usuário'
+        this._element.placeholder = 'Ex: light';
     }
 }
 
@@ -301,6 +312,7 @@ export class ConfigPassword extends TextFiled {
         super()
         this._element.value = password
         this._label.innerHTML = 'Senha'
+        this._element.placeholder = 'Ex: 1234';
     }
 }
 
@@ -309,6 +321,7 @@ export class ConfigUuid extends TextFiled {
         super()
         this._element.value = uuid
         this._label.innerHTML = 'UUID'
+        this._element.placeholder = 'Ex: 00000000-0000-0000-0000-000000000000';
     }
 }
 
@@ -317,6 +330,7 @@ export class ConfigUdpPort extends TextFiled {
         super()
         this._element.value = port
         this._label.innerHTML = 'Portas UDP'
+        this._element.placeholder = 'Ex: 8080,8081,8083';
     }
 
     validate() {
@@ -331,6 +345,7 @@ export class ConfigUrlCheckUser extends TextFiled {
         super()
         this._element.value = url
         this._label.innerHTML = 'URL Check User'
+        this._element.placeholder = 'Ex: https://url.checkuser.com';
 
         this._btnCheckUrl = document.createElement('button');
         this._btnCheckUrl.type = 'button';
@@ -386,6 +401,7 @@ export class ConfigIcon extends TextFiled {
         super()
         this._element.value = url
         this._label.innerHTML = 'Ícone'
+        this._element.placeholder = 'Ex: https://icon.example.com/icon.png';
 
         this._upload = document.createElement('button');
         this._upload.type = 'button';
@@ -448,4 +464,149 @@ export class ConfigIcon extends TextFiled {
         div.appendChild(group)
         return div
     }
+}
+
+export class ConfigDnsttKey extends TextAreaFiled {
+  constructor(key) {
+    super();
+    this._element.value = key;
+    this._label.innerText = 'KEY';
+    this._element.placeholder = 'Ex: 1234567890';
+  }
+
+  validate() {
+    if (!this.getValue()) {
+      throw new Error('Defina uma KEY para configuração');
+    }
+  }
+}
+
+export class ConfigDnsttNameServer extends TextFiled {
+  constructor(names) {
+    super();
+    this._element.value = names;
+    this._label.innerText = 'Nome do servidor';
+    this._element.placeholder = 'Ex: ns.exemple.com';
+  }
+
+  validate() {
+    if (!this.getValue()) {
+      throw new Error('Defina um NOME DO SERVIDOR para configuração');
+    }
+  }
+}
+
+export class ConfigDnsttServer extends TextFiled {
+  constructor(dns) {
+    super();
+    this._element.value = dns;
+    this._label.innerText = 'DNS do servidor';
+    this._element.placeholder = 'Ex: 8.8.8.8';
+  }
+
+  validate() {
+    if (!this.getValue()) {
+      throw new Error('Defina um DNS DO SERVIDOR para configuração');
+    }
+  }
+}
+
+export class ConfigHyObfs extends TextFiled {
+  constructor(obfs) {
+    super();
+    this._element.value = obfs;
+    this._label.innerText = 'Ofuscação de senha';
+    this._element.placeholder = 'Ex: obfs_password';
+  }
+}
+
+export class ConfigHyUpMbps extends NumberFiled {
+  constructor(mbps) {
+    super();
+    this._element.value = mbps;
+    this._label.innerText = 'Upload (Mbps)';
+    this._element.placeholder = 'Ex: 100';
+  }
+}
+
+export class ConfigHyDownMbps extends NumberFiled {
+  constructor(mbps) {
+    super();
+    this._element.value = mbps;
+    this._label.innerText = 'Download (Mbps)';
+    this._element.placeholder = 'Ex: 150';
+  }
+}
+
+export class ConfigHyInsecure extends SelectFiled {
+  constructor(insecure) {
+    super([
+      { label: 'Sim', value: 'true' },
+      { label: 'Não', value: 'false' },
+    ]);
+    this._label.innerText = 'Conexões inseguras';
+    this.setSelected(insecure ? 'true' : 'false');
+  }
+
+  getValue() {
+    return this.getSelected().value === 'true';
+  }
+}
+
+export class ConfigHyPort extends TextFiled {
+  constructor(port) {
+    super();
+    this._element.value = port;
+    this._label.innerText = 'Porta';
+    this._element.placeholder = 'Ex: 8080,10000-65535';
+    this._element.pattern = '^(\\d{1,5})(,\\s*\\d{1,5})*$';
+  }
+
+  validate() {
+    if (!this.getValue()) {
+      throw new Error('Defina uma PORTA para configuração');
+    }
+
+    const ports = this.getValue()
+      .split(',')
+      .map((p) => p.trim());
+
+    for (const port of ports) {
+      const range = port.split('-');
+      if (range.length === 2) {
+        const start = parseInt(range[0]);
+        const end = parseInt(range[1]);
+        if (
+          isNaN(start) ||
+          isNaN(end) ||
+          start < 1 ||
+          end > 65535 ||
+          start > end
+        ) {
+          throw new Error(`Intervalo de porta inválido: ${port}`);
+        }
+        return;
+      }
+
+      const portNumber = parseInt(port);
+      if (isNaN(portNumber) || portNumber < 1 || portNumber > 65535) {
+        throw new Error(`Porta inválida: ${port}`);
+      }
+    }
+  }
+}
+
+export class ConfigHyVersion extends SelectFiled {
+  constructor(version) {
+    super([
+      { label: '1', value: '1' },
+      { label: '2', value: '2' },
+    ]);
+    this._label.innerText = 'Versão do Hysteria';
+    this.setSelected(version.toString());
+  }
+
+  getValue() {
+    return parseInt(this.getSelected().value);
+  }
 }

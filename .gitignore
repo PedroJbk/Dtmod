@@ -8,3 +8,6 @@ prisma/*.db-journal
 yarn.lock
 nginx/fullchain.pem
 nginx/privkey.pem
+Dockerfile
+apktool
+apktool.txt

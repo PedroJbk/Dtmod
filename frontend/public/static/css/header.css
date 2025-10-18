@@ -21,8 +21,10 @@
     border: none;
     border-radius: 5px;
     background: #0000000f;
+    /*
     color: inherit;
     visibility: hidden;
+    */
 }
 
 .header button i {

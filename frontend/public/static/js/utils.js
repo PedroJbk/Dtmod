@@ -23,7 +23,7 @@ const setRequiredElements = (elements, isRequired) => {
 }
 
 const getCsrfTokenHead = () => document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-const getCsrfTokenRefresh = (request) => request.headers.get('csrf-token');
+const getCsrfTokenRefresh = (response) => response.headers.get('csrf-token');
 
 const doSearch = (e) => {
     let search = document.getElementById('search').value;

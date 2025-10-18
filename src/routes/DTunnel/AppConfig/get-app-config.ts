@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { AppConfigSelect } from './zod-schema';
 import prisma from '../../../config/prisma-client';
 import Authentication from '../../../middlewares/authentication';
-import AppConfigParser from '../../../utils/parsers/app-config-parser';
+import { AppConfigParser } from '../../../utils/parsers/app-config-parser';
 import { FastifyReply, FastifyRequest, RouteOptions } from 'fastify';
 
 const querySchema = z.object({
@@ -48,7 +48,7 @@ export default {
         skip: (offset - 1) * limit,
         take: limit,
       })
-    ).map((config) => JSON.parse(AppConfigParser(config)));
+    ).map((config) => AppConfigParser(config));
 
     response.data.total = total;
     response.data.count = configs.length;

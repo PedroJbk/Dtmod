@@ -3,12 +3,14 @@ import { Observable } from "./observer.js";
 const Mode = {
     SSH_DIRECT: 'SSH_DIRECT',
     SSH_PROXY: 'SSH_PROXY',
+    SSH_DNSTT: 'SSH_DNSTT',
     SSL_DIRECT: 'SSL_DIRECT',
     SSL_PROXY: 'SSL_PROXY',
     OVPN_PROXY: 'OVPN_PROXY',
     OVPN_SSL: 'OVPN_SSL',
     OVPN_SSL_PROXY: 'OVPN_SSL_PROXY',
     V2RAY: 'V2RAY',
+    HYSTERIA: 'HYSTERIA',
 }
 
 const Status = {
@@ -98,6 +100,7 @@ class ConfigPayloadModel {
 
 class ConfigModel {
     id;
+    category;
     category_id;
     user_id;
     name;
@@ -107,7 +110,6 @@ class ConfigModel {
     sorter;
     status;
     auth;
-    category;
     config_openvpn;
     config_payload;
     config_v2ray;
@@ -115,6 +117,15 @@ class ConfigModel {
     icon;
     proxy;
     server;
+    dnstt_key;
+    dnstt_name_server;
+    dnstt_server;
+    hy_obfs;
+    hy_insecure;
+    hy_port;
+    hy_up_mbps;
+    hy_down_mbps;
+    hy_version;
     udp_ports;
     url_check_user;
 
@@ -129,15 +140,28 @@ class ConfigModel {
         model.tls_version = data.tls_version || 'TLSv1.2';
         model.sorter = data.sorter;
         model.status = data.status;
-        model.auth = AuthModel.fromJson(data.auth);
         model.category = data.category ? CategoryModel.fromJson(data.category) : null;
+        model.auth = AuthModel.fromJson(data.auth);
         model.config_payload = ConfigPayloadModel.fromJson(data.config_payload);
-        model.config_openvpn = data.config_openvpn ? this.base64Decode(data.config_openvpn) : null;
-        model.config_v2ray = data.config_v2ray ? this.base64Decode(data.config_v2ray) : null;
+        model.config_openvpn = data.config_openvpn
+        ? this.base64Decode(data.config_openvpn)
+        : null;
+        model.config_v2ray = data.config_v2ray
+        ? this.base64Decode(data.config_v2ray)
+        : null;
         model.dns_server = DnsServerModel.fromJson(data.dns_server);
         model.icon = data.icon;
         model.proxy = ProxyModel.fromJson(data.proxy ?? {});
         model.server = ServerModel.fromJson(data.server ?? {});
+        model.dnstt_key = data.dnstt_key ?? null;
+        model.dnstt_name_server = data.dnstt_name_server ?? null;
+        model.dnstt_server = data.dnstt_server ?? null;
+        model.hy_obfs = data.hy_obfs ?? null;
+        model.hy_insecure = data.hy_insecure ?? true;
+        model.hy_port = data.hy_port ?? '13375';
+        model.hy_up_mbps = data.hy_up_mbps ?? 100;
+        model.hy_down_mbps = data.hy_down_mbps ?? 150;
+        model.hy_version = data.hy_version ?? 1;
         model.udp_ports = data?.udp_ports ?? [7300];
         model.url_check_user = data.url_check_user;
         return model;

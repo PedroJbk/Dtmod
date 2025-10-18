@@ -11,7 +11,9 @@ export default function handler(fastify: FastifyInstance, _: any, done: () => vo
     try {
       const route: RouteOptions = require(file).default;
       if (route && route.url) fastify.route(route);
-    } catch (err) {}
+    } catch (err) {
+      console.log(err);
+    }
   });
 
   fastify.decorateRequest('csrfProtection', { getter: () => csrf });

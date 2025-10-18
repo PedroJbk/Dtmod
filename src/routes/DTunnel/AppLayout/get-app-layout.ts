@@ -7,6 +7,7 @@ import { AppLayoutParser } from '../../../utils/parsers/app-layout-parser';
 const querySchema = z.object({
   offset: z.string().optional().default('1'),
   limit: z.string().optional().default('20'),
+  status: z.enum(['INACTIVE', 'ACTIVE', 'ALL']).default('ALL'),
 });
 
 export default {
@@ -25,7 +26,12 @@ export default {
 
     const appLayouts = AppLayoutParser(
       await prisma.appLayout.findMany({
-        where: { user_id: req.user.id },
+        where: {
+          user_id: req.user.id,
+          ...(query.status !== 'ALL' && {
+            is_active: query.status === 'ACTIVE',
+          }),
+        },
         select: {
           id: true,
           user_id: true,

@@ -23,7 +23,7 @@ export default {
     const usernameAlreadyExists = await SafeCallback(() =>
       prisma.user.findFirst({
         where: {
-          username: body.username,
+          username: body.username.toLowerCase(),
         },
       })
     );

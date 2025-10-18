@@ -100,7 +100,7 @@ class RegisterModalSuccess {
                     <div class="modal-body">
                         <div class="text-center">
                             <img src="https://cdn-icons-png.flaticon.com/512/1642/1642423.png" width="200" height="200">
-                            <p class="fs-2 text-success">Parabéns, Acesso criado.</p>
+                            <p class="fs-2 text-success">Parabéns, conta registrada.</p>
                         </div>
                         <div class="form-control bg-dark text-white __data" style="overflow-y: auto;">
                             <b>
@@ -108,12 +108,6 @@ class RegisterModalSuccess {
                             </b>
                             <b>
                                 <p class="mb-2">🔑 Senha: <span class="__password"></span></p>
-                            </b>
-                            <b>
-                                <p class="mb-2">🔗 Link de acesso: <a href="${window.location.origin + '/login'}">${window.location.origin + '/login'}</a></p>
-                            </b>
-                            <b>
-                                <p class="mb-2">🎞 Alterar Token: <a href="https://youtu.be/hz2zCdgvRzA" target="_blank">https://youtu.be/hz2zCdgvRzA</a></p>
                             </b>
                             <ul class="mt-4">
                                 <li>
@@ -126,8 +120,13 @@ class RegisterModalSuccess {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <div class="d-flex mx-3 w-100">
-                            <button type="button" data-bs-dismiss="modal" class="btn btn-dark btn-block w-100 me-3 border">FECHAR</button>
+                        <div class="d-flex w-100 gap-3">
+                            <a href="${window.location.origin + '/login'}" class="flex-fill text-decoration-none">
+                            <button type="button" class="btn btn-dark w-100 border">LOGIN</button>
+                            </a>
+                            <div class="flex-fill">
+                            <button type="button" data-bs-dismiss="modal" class="btn btn-dark w-100 border">FECHAR</button>
+                            </div>
                         </div>
                     </div>
                 </div>

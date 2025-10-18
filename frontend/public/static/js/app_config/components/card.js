@@ -42,23 +42,23 @@ class CardDefault extends ComponentStyled {
             width: '270px'
         });
 
-        this.element.innerHTML = this.__html__;
+        //this.element.innerHTML = this.__html__;
     }
 
     setOnBtnCreateClick(callback) {
-        this.element.querySelector('.__create').addEventListener('click', callback);
+        document.querySelector('.__create').addEventListener('click', callback);
     }
 
     setOnBtnImportClick(callback) {
-        this.element.querySelector('.__import').addEventListener('click', callback);
+        document.querySelector('.__import').addEventListener('click', callback);
     }
 
     setOnBtnSyncClick(callback) {
-        this.element.querySelector('.__sync').addEventListener('click', callback);
+        //this.element.querySelector('.__sync').addEventListener('click', callback);
     }
 
     setOnBtnApkDownloadClick(callback) {
-        this.element.querySelector('.__apk_download').addEventListener('click', callback);
+        //this.element.querySelector('.__apk_download').addEventListener('click', callback);
     }
 }
 

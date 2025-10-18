@@ -76,6 +76,14 @@ const AppTextDefault = [
     text: 'Configurações atualizadas com sucesso',
   },
   {
+    label: 'LBL_APP_CONFIG_UPDATED',
+    text: 'Configurações do app atualizadas com sucesso',
+  },
+  {
+    label: 'LBL_APP_TEXT_UPDATED',
+    text: 'Textos do app atualizados com sucesso',
+  },
+  {
     label: 'LBL_CONFIG_NOT_SUPPORTED',
     text: 'Parece que essa configuração não é suportada neste aplicativo',
   },
@@ -102,6 +110,10 @@ const AppTextDefault = [
   {
     label: 'LBL_STOPPING',
     text: 'Parando...',
+  },
+  {
+    label: 'LBL_LOCAL_NETWORK_IP',
+    text: '{NETWORK}: {IP}',
   },
   {
     label: 'LBL_LOCAL_IP',
@@ -365,7 +377,7 @@ const AppTextDefault = [
   },
   {
     label: 'LBL_VPN_PERMISSION_DENIED_TEXT',
-    text: 'Desculpe, não foi possível estabelecer a conexão VPN. Isso pode ter ocorrido porque você optou por não adicionar um perfil de VPN, negou o acesso ao serviço VPN ou tem um aplicativo que está usando o VPN sempre ativo. Verifique suas configurações de VPN e verifique se não há outros aplicativos que estejam usando o VPN para garantir que a conexão VPN possa ser estabelecida corretamente.',
+    text: "Desculpe, não foi possível estabelecer a conexão VPN. Isso pode ter ocorrido porque você optou por não adicionar um perfil de VPN, negou o acesso ao serviço VPN ou tem um aplicativo que está usando o VPN sempre ativo. Verifique suas configurações de VPN e verifique se não há outros aplicativos que estejam usando o VPN para garantir que a conexão VPN possa ser estabelecida corretamente.'",
   },
   {
     label: 'LBL_VPN_PERMISSION_DENIED_BTN',
@@ -430,6 +442,82 @@ const AppTextDefault = [
   {
     label: 'LBL_QUANTITY_PROCESS',
     text: '<b>PROCESSOS: %s</b>',
+  },
+  {
+    label: 'LBL_PING_STARTED',
+    text: '<b>PING INICIADO</b>',
+  },
+  {
+    label: 'LBL_PING_MESSAGE',
+    text: '<i>Ping: %sms</i>',
+  },
+  {
+    label: 'LBL_PING_STOPPED',
+    text: '<b>PING PARADO</b>',
+  },
+  {
+    label: 'LBL_ASSISTANT_TITLE',
+    text: 'ATIVAR ASSISTENTE',
+  },
+  {
+    label: 'LBL_ASSISTANT_TEXT',
+    text: 'Para continuar, você precisa configurar o aplicativo ({app_name}) como assistente',
+  },
+  {
+    label: 'LBL_ASSISTANT_BUTTON',
+    text: '<b>ABRIR CONFIGURAÇÕES</b>',
+  },
+  {
+    label: 'LBL_FORCE_AIRPLANE_MODE_TOGGLE',
+    text: '<b>Tentando ativar e desativar o modo avião...</b>',
+  },
+  {
+    label: 'LBL_MENU_HOTSPOT_TITLE',
+    text: 'LIGAR/DESLIGAR HOTSPOT',
+  },
+  {
+    label: 'LBL_MENU_HOTSPOT_DESCRIPTION',
+    text: 'Ao clicar nessa opção, o hotspot do dispositivo será ligado ou desligado.',
+  },
+  {
+    label: 'LBL_MENU_AIRPLANE_TITLE',
+    text: 'ATIVAR/DESTIVAR MODO AVIAO',
+  },
+  {
+    label: 'LBL_MENU_AIRPLANE_DESCRIPTION',
+    text: 'Ao clicar nessa opção, o modo avião do dispositivo será ativado ou desativado.',
+  },
+  {
+    label: 'LBL_MENU_APN_TITLE',
+    text: 'ABRIR CONFIGURAÇÃO DE APN',
+  },
+  {
+    label: 'LBL_MENU_APN_DESCRIPTION',
+    text: 'Ao clicar nessa opção, a configuração de apn do dispositivo será aberta.',
+  },
+  {
+    label: 'LBL_MENU_NETWORK_TITLE',
+    text: 'ABRIR CONFIGURAÇÃO DE REDE',
+  },
+  {
+    label: 'LBL_MENU_NETWORK_DESCRIPTION',
+    text: 'Ao clicar nessa opção, a configuração de rede do dispositivo será aberta.',
+  },
+  {
+    label: 'LBL_MENU_BATTERY_TITLE',
+    text: 'DESATIVAR OTIMIZAÇÃO DE BATERIA',
+  },
+  {
+    label: 'LBL_MENU_BATTERY_DESCRIPTION',
+    text: 'Ao clicar nessa opção, a otimização de bateria será desativada',
+  },
+  {
+    label: 'LBL_MENU_CLEAN_APP_TITLE',
+    text: 'LIMPAR DADOS DO APP',
+  },
+  {
+    label: 'LBL_MENU_CLEAN_APP_DESCRIPTION',
+    text: 'Ao clicar nessa opção, todos os dados do app serão apagados.',
   },
 ];
 

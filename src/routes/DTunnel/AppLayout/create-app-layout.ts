@@ -53,6 +53,15 @@ export default {
       });
     }
 
+    await SafeCallback(async () => {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+          app_layout_version: { increment: 1 },
+        },
+      });
+    });
+
     reply.status(201).send();
   },
 } as RouteOptions;

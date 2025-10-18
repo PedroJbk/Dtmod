@@ -27,6 +27,15 @@ export default {
       throw new Error('Não foi possível criar categoria');
     }
 
+    await SafeCallback(async () => {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+          app_config_version: { increment: 1 },
+        },
+      });
+    });
+
     reply.status(201).send({ category_id: category.id });
   },
 } as RouteOptions;

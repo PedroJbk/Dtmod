@@ -5,7 +5,9 @@ import {
     ConfigDns1, ConfigDns2, ConfigIcon, ConfigName, ConfigOpenVPN, ConfigOrder, ConfigPassword,
     ConfigPayload, ConfigPort, ConfigProxy,
     ConfigServer, ConfigSni, ConfigTlsVersion, ConfigType, ConfigUdpPort,
-    ConfigUrlCheckUser, ConfigUsername, ConfigUuid, ConfigV2ray, InputFiled
+    ConfigUrlCheckUser, ConfigUsername, ConfigUuid, ConfigV2ray, InputFiled,
+    ConfigHyPort, ConfigHyObfs, ConfigHyInsecure, ConfigHyUpMbps, ConfigHyDownMbps, ConfigHyVersion,
+    ConfigDnsttKey, ConfigDnsttNameServer, ConfigDnsttServer
 } from "./fields.js"
 
 class ConfigForm {
@@ -121,6 +123,91 @@ class ConfigFormSshProxy extends ConfigFormSshDirect {
         )
         return element
     }
+}
+
+class ConfigFormSshDnstt extends ConfigForm {
+  constructor(config, categories) {
+    super(config, categories);
+    this.server = new ConfigServer('0.0.0.0');
+    this.serverPort = new ConfigPort(
+      this.normalizePort(config?.server?.port) || 2222
+    );
+    this.dnsttKey = new ConfigDnsttKey(config?.dnstt_key || '');
+    this.dnsttNameServer = new ConfigDnsttNameServer(
+      config?.dnstt_name_server || ''
+    );
+    this.dnsttServer = new ConfigDnsttServer(config?.dnstt_server || '');
+    this.dns1 = new ConfigDns1(config?.dns_server?.dns1 || '8.8.8.8');
+    this.dns2 = new ConfigDns2(config?.dns_server?.dns2 || '8.8.4.4');
+    this.username = new ConfigUsername(config?.auth?.username || '');
+    this.password = new ConfigPassword(config?.auth?.password || '');
+    this.udpPort = new ConfigUdpPort(config.udp_ports || 7300);
+
+    this.server._element.disabled = true;
+  }
+
+  normalizePort(port) {
+    const defaultPort = 2222;
+
+    if (!port || isNaN(port)) {
+      return defaultPort;
+    }
+
+    if (port < 1024) {
+      return defaultPort;
+    }
+
+    return port;
+  }
+
+  toConfig() {
+    const config = super.toConfig();
+    config.dnstt_key = this.dnsttKey.getValue();
+    config.dnstt_name_server = this.dnsttNameServer.getValue();
+    config.dnstt_server = this.dnsttServer.getValue();
+    config.server = {
+      host: this.server.getValue(),
+      port: this.serverPort.getValue(),
+    };
+    config.dns_server = {
+      dns1: this.dns1.getValue(),
+      dns2: this.dns2.getValue(),
+    };
+    config.auth = {
+      username: this.username.getValue(),
+      password: this.password.getValue(),
+    };
+    config.udp_ports = this.udpPort
+      .getValue()
+      .split(',')
+      .map((p) => parseInt(p));
+    return config;
+  }
+
+  render() {
+    const element = super.render();
+    // element.insertBefore(
+    //   this.createDivWithClass(this.server.render(), this.serverPort.render()),
+    //   element.childNodes[3]
+    // );
+    element.insertBefore(
+      this.createDivWithClass(this.dnsttKey.render()),
+      element.childNodes[3]
+    );
+    element.insertBefore(
+      this.createDivWithClass(
+        this.dnsttNameServer.render(),
+        this.dnsttServer.render()
+      ),
+      element.childNodes[4]
+    );
+    element.insertBefore(
+      this.createDivWithClass(this.username.render(), this.password.render()),
+      element.childNodes[5]
+    );
+    element.insertBefore(this.udpPort.render(), element.childNodes[6]);
+    return element;
+  }
 }
 
 class ConfigFormSslDirect extends ConfigForm {
@@ -300,17 +387,85 @@ class ConfigFormV2ray extends ConfigForm {
     }
 }
 
+class ConfigFormHysteria extends ConfigForm {
+  constructor(config, categories) {
+    super(config, categories);
+    this.server = new ConfigServer(config?.server?.host || '');
+    this.port = new ConfigHyPort(config?.hy_port || '13375');
+    this.dns1 = new ConfigDns1(config?.dns_server?.dns1 || '8.8.8.8');
+    this.dns2 = new ConfigDns2(config?.dns_server?.dns2 || '8.8.4.4');
+    this.sni = new ConfigSni(config?.config_payload?.sni || '', true);
+    this.password = new ConfigPassword(config?.auth?.password || '');
+    this.hyObfs = new ConfigHyObfs(config?.hy_obfs || '');
+    this.hyInsecure = new ConfigHyInsecure(config?.hy_insecure ?? true);
+    this.hyUpMbps = new ConfigHyUpMbps(config?.hy_up_mbps || 100);
+    this.hyDownMbps = new ConfigHyDownMbps(config?.hy_down_mbps || 150);
+    this.hyVersion = new ConfigHyVersion(config?.hy_version || 1);
+
+    this.sni._label.innerHTML = 'SNI (Opcional)';
+  }
+
+  toConfig() {
+    const config = super.toConfig();
+    config.server = {
+      host: this.server.getValue(),
+      port: 80,
+    };
+    config.config_payload = { sni: this.sni.getValue() };
+    config.dns_server = {
+      dns1: this.dns1.getValue(),
+      dns2: this.dns2.getValue(),
+    };
+    config.auth = { password: this.password.getValue() };
+    config.hy_obfs = this.hyObfs.getValue();
+    config.hy_insecure = this.hyInsecure.getValue();
+    config.hy_port = this.port.getValue();
+    config.hy_up_mbps = this.hyUpMbps.getValue();
+    config.hy_down_mbps = this.hyDownMbps.getValue();
+    config.hy_version = this.hyVersion.getValue();
+    return config;
+  }
+
+  render() {
+    const element = super.render();
+    element.insertBefore(this.hyVersion.render(), element.childNodes[3]);
+    element.insertBefore(
+      this.createDivWithClass(this.server.render(), this.port.render()),
+      element.childNodes[4]
+    );
+    element.insertBefore(
+      this.createDivWithClass(this.sni.render(), this.password.render()),
+      element.childNodes[5]
+    );
+    element.insertBefore(
+      this.createDivWithClass(this.hyObfs.render(), this.hyInsecure.render()),
+      element.childNodes[6]
+    );
+    element.insertBefore(
+      this.createDivWithClass(this.hyUpMbps.render(), this.hyDownMbps.render()),
+      element.childNodes[7]
+    );
+    element.insertBefore(
+      this.createDivWithClass(this.dns1.render(), this.dns2.render()),
+      element.childNodes[8]
+    );
+    return element;
+  }
+}
+
 export class ConfigFormFactory {
     static create(type, config, categories) {
         const __map = {
             SSH_DIRECT: ConfigFormSshDirect,
             SSH_PROXY: ConfigFormSshProxy,
+            SSH_DNSTT: ConfigFormSshDnstt,
             SSL_DIRECT: ConfigFormSslDirect,
             SSL_PROXY: ConfigFormSslProxy,
             OVPN_PROXY: ConfigFormOpenVPNProxy,
             OVPN_SSL: ConfigFormOpenVPNSsl,
             OVPN_SSL_PROXY: ConfigFormOpenVPNSslProxy,
             V2RAY: ConfigFormV2ray,
+            HYSTERIA: ConfigFormHysteria,
         }
         return new __map[type](config, categories)
     }
