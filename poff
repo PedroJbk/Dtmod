@@ -1,3 +1,52 @@
 #!/bin/bash
+# ============================================================
+# Parar Painel - DTunnelMod
+# ============================================================
+
+# Cores
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+# ============================================================
+# DETECÇÃO ROBUSTA DO DIRETÓRIO DE INSTALAÇÃO
+# ============================================================
+PANEL_DIR=""
+
+# 1. Usar variável de ambiente se disponível
+if [ -n "$DTMOD_INSTALL_DIR" ] && [ -f "$DTMOD_INSTALL_DIR/ecosystem.config.js" ]; then
+    PANEL_DIR="$DTMOD_INSTALL_DIR"
+# 2. Verificar arquivo .install_dir
+elif [ -f "$HOME/Dtmod/.install_dir" ]; then
+    PANEL_DIR="$(cat "$HOME/Dtmod/.install_dir")"
+elif [ -f "/root/Dtmod/.install_dir" ]; then
+    PANEL_DIR="$(cat /root/Dtmod/.install_dir)"
+elif [ -f "$HOME/.install_dir" ]; then
+    PANEL_DIR="$(cat "$HOME/.install_dir")"
+# 3. Verificar diretórios conhecidos
+elif [ -d "/root/Dtmod" ] && [ -f "/root/Dtmod/ecosystem.config.js" ]; then
+    PANEL_DIR="/root/Dtmod"
+elif [ -d "$HOME/Dtmod" ] && [ -f "$HOME/Dtmod/ecosystem.config.js" ]; then
+    PANEL_DIR="$HOME/Dtmod"
+else
+    # 4. Tentar resolver via symlink
+    RESOLVED="$(readlink -f "$0" 2>/dev/null)"
+    if [ -n "$RESOLVED" ] && [ -f "$(dirname "$RESOLVED")/ecosystem.config.js" ]; then
+        PANEL_DIR="$(dirname "$RESOLVED")"
+    fi
+fi
+
+if [ -z "$PANEL_DIR" ] || [ ! -f "$PANEL_DIR/ecosystem.config.js" ]; then
+    echo -e "${RED}Erro: Diretorio do painel nao encontrado!${NC}"
+    exit 1
+fi
+
+cd "$PANEL_DIR"
 pm2 stop DTunnel
-echo "Painel DTunnelMod desativado!"
+pm2 save
+
+echo ""
+echo -e "${RED}Painel DTunnelMod desativado!${NC}"
+echo -e "${CYAN}Use 'pon' para reativar.${NC}"
+echo ""

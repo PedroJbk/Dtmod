@@ -3,6 +3,7 @@ node_modules
 .env
 .env.production
 .env.development
+.install_dir
 prisma/*.db
 prisma/*.db-journal
 yarn.lock
