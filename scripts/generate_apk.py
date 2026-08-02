@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Generate a branded DTunnel APK from the integrated XHTTP base.
 
-The generator changes only the panel endpoint domains. The XHTTP transport itself is
-part of ``base.apk`` and is verified after decoding, preventing a generated APK from
-silently accepting a profile mode without carrying the corresponding runtime.
+The generator changes the panel endpoint domains in Smali files and updates the
+``assets/dtunnelmod.json`` so the app points to the correct panel URL. The XHTTP
+transport itself is part of ``base.apk`` and is verified after decoding, preventing
+a generated APK from silently accepting a profile mode without carrying the
+corresponding runtime.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -45,10 +48,13 @@ def run_command(command: list[str], *, cwd: Path | None = None) -> None:
 
 
 def normalize_domain(value: str) -> str:
+    """Normaliza o domínio do painel, aceitando host:porta ou apenas host."""
     domain = value.strip()
     domain = re.sub(r"^https?://", "", domain, flags=re.IGNORECASE).strip("/")
-    if not re.fullmatch(r"[A-Za-z0-9.-]+", domain) or "." not in domain:
-        raise ValueError("Informe somente um domínio válido, sem protocolo, porta ou caminho.")
+    # Aceitar host:porta (ex: meudominio.com:3000) ou apenas host
+    host_part = domain.split(":")[0]
+    if not re.fullmatch(r"[A-Za-z0-9.-]+", host_part) or "." not in host_part:
+        raise ValueError("Informe somente um domínio válido, sem protocolo ou caminho. Porta é opcional (ex: meudominio.com:3000).")
     return domain
 
 
@@ -70,16 +76,37 @@ def verify_xhttp_runtime(work_dir: Path) -> None:
 
 
 def replace_domains(work_dir: Path, new_domain: str) -> int:
+    """Substitui os domínios antigos pelo novo domínio nos arquivos Smali."""
+    # Para substituição nos Smali, usar apenas o host sem porta
+    new_host = new_domain.split(":")[0]
     replacements = 0
     for smali_file in work_dir.glob("smali*/**/*.smali"):
         content = smali_file.read_text(encoding="utf-8")
         updated = content
         for old_domain in OLD_DOMAINS:
-            updated = updated.replace(old_domain, new_domain)
+            updated = updated.replace(old_domain, new_host)
         if updated != content:
             smali_file.write_text(updated, encoding="utf-8")
             replacements += 1
     return replacements
+
+
+def update_dtunnelmod_json(work_dir: Path, new_domain: str) -> None:
+    """Atualiza o assets/dtunnelmod.json com a URL do painel do usuário."""
+    dtunnelmod_json = work_dir / "assets" / "dtunnelmod.json"
+    if not dtunnelmod_json.is_file():
+        print("Aviso: assets/dtunnelmod.json não encontrado, pulando atualização.")
+        return
+
+    try:
+        data = json.loads(dtunnelmod_json.read_text(encoding="utf-8"))
+        # Construir URL completa com protocolo
+        new_url = f"https://{new_domain}"
+        data["url"] = new_url
+        dtunnelmod_json.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"dtunnelmod.json atualizado: url = {new_url}")
+    except Exception as e:
+        print(f"Aviso: não foi possível atualizar dtunnelmod.json: {e}")
 
 
 def find_signed_apk(output_dir: Path) -> Path:
@@ -118,6 +145,9 @@ def generate_apk(new_domain: str, output_name: str = "dtmod-custom.apk") -> Path
         changed_files = replace_domains(work_dir, new_domain)
         print(f"Domínio aplicado em {changed_files} arquivo(s) Smali.")
 
+        # Atualizar o dtunnelmod.json com a URL do painel
+        update_dtunnelmod_json(work_dir, new_domain)
+
         unsigned_apk = output_dir / "unsigned.apk"
         print("Reconstruindo APK...")
         run_command([APKTOOL, "b", str(work_dir), "-o", str(unsigned_apk)])
@@ -138,6 +168,9 @@ def generate_apk(new_domain: str, output_name: str = "dtmod-custom.apk") -> Path
 def main() -> None:
     if len(sys.argv) < 2:
         print("Uso: python3 generate_apk.py <dominio-do-painel>")
+        print("Exemplos:")
+        print("  python3 generate_apk.py meudominio.com")
+        print("  python3 generate_apk.py meudominio.com:3000")
         raise SystemExit(1)
 
     try:

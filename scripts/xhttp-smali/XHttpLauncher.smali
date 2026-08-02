@@ -29,10 +29,19 @@
     move-result-object v0
 
     # XHTTP endpoint and port come from the standard server object.
+    # Guard against null server object to avoid NullPointerException.
     iget-object v1, p1, Lg4/e;->r:Lg4/d;
+
+    if-eqz v1, :cond_server_null
 
     iget-object v1, v1, Lg4/d;->l:Ljava/lang/String;
 
+    if-nez v1, :cond_server_ready
+
+    :cond_server_null
+    const-string v1, ""
+
+    :cond_server_ready
     const-string v2, "sshServer"
 
     invoke-interface {v0, v2, v1}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
@@ -41,12 +50,20 @@
 
     iget-object v1, p1, Lg4/e;->r:Lg4/d;
 
+    if-eqz v1, :cond_port_default
+
     iget v1, v1, Lg4/d;->m:I
 
     invoke-static {v1}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;
 
     move-result-object v1
 
+    if-nez v1, :cond_port_ready
+
+    :cond_port_default
+    const-string v1, "443"
+
+    :cond_port_ready
     const-string v2, "sshPort"
 
     invoke-interface {v0, v2, v1}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
@@ -54,10 +71,19 @@
     move-result-object v0
 
     # SSH credentials are already part of every panel configuration.
+    # Guard against null auth object to avoid NullPointerException.
     iget-object v1, p1, Lg4/e;->p:Lg4/a;
+
+    if-eqz v1, :cond_user_empty
 
     iget-object v1, v1, Lg4/a;->l:Ljava/lang/String;
 
+    if-nez v1, :cond_user_ready
+
+    :cond_user_empty
+    const-string v1, ""
+
+    :cond_user_ready
     const-string v2, "sshUser"
 
     invoke-interface {v0, v2, v1}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
@@ -103,12 +129,16 @@
     move-result-object v0
 
     # proxy.host is the HTTP Host header (proxy.port is intentionally unused for XHTTP).
+    # Guard against null proxy object to avoid NullPointerException.
     iget-object v1, p1, Lg4/e;->q:Lg4/d;
+
+    if-eqz v1, :cond_host_empty
 
     iget-object v1, v1, Lg4/d;->l:Ljava/lang/String;
 
     if-nez v1, :cond_host_ready
 
+    :cond_host_empty
     const-string v1, ""
 
     :cond_host_ready
@@ -122,6 +152,8 @@
     const-string v1, "NONE"
 
     iget-object v2, p1, Lg4/e;->E:Ljava/lang/String;
+
+    if-eqz v2, :cond_tls_enabled
 
     invoke-virtual {v1, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 
@@ -144,6 +176,8 @@
     move-result-object v0
 
     const-string v3, "TLSv1.2"
+
+    if-eqz v2, :cond_tls13
 
     invoke-virtual {v3, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 
@@ -196,12 +230,16 @@
 
     move-result-object v0
 
+    # Guard against null dnsServer object.
     iget-object v1, p1, Lg4/e;->B:Lg4/c;
+
+    if-eqz v1, :cond_dns1_default
 
     iget-object v1, v1, Lg4/c;->l:Ljava/lang/String;
 
     if-nez v1, :cond_dns1_ready
 
+    :cond_dns1_default
     const-string v1, "1.1.1.1"
 
     :cond_dns1_ready
@@ -213,10 +251,13 @@
 
     iget-object v1, p1, Lg4/e;->B:Lg4/c;
 
+    if-eqz v1, :cond_dns2_default
+
     iget-object v1, v1, Lg4/c;->m:Ljava/lang/String;
 
     if-nez v1, :cond_dns2_ready
 
+    :cond_dns2_default
     const-string v1, "1.0.0.1"
 
     :cond_dns2_ready
@@ -261,12 +302,16 @@
 
     const-string v1, "ssh_password"
 
+    # Guard against null auth object for password.
     iget-object v2, p1, Lg4/e;->p:Lg4/a;
+
+    if-eqz v2, :cond_password_empty
 
     iget-object v2, v2, Lg4/a;->m:Ljava/lang/String;
 
     if-nez v2, :cond_password_ready
 
+    :cond_password_empty
     const-string v2, ""
 
     :cond_password_ready
