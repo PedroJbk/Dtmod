@@ -196,6 +196,43 @@ export class ConfigPayload extends TextAreaFiled {
     }
 }
 
+export class ConfigXhttpHost extends TextFiled {
+    constructor(host) {
+        super()
+        this._element.value = host
+        this._label.innerText = 'XHTTP Host'
+        this._element.placeholder = 'Ex: edge.exemplo.com'
+    }
+
+    validate() {
+        if (!this.getValue()) {
+            throw new Error('Defina o HOST XHTTP para configuração')
+        }
+    }
+}
+
+export class ConfigXhttpPath extends TextFiled {
+    constructor(path) {
+        super()
+        this._element.value = path || '/ssh'
+        this._label.innerText = 'XHTTP Path'
+        this._element.placeholder = 'Ex: /ssh'
+    }
+
+    getValue() {
+        const value = super.getValue().trim()
+        if (!value) return ''
+        return value.startsWith('/') ? value : `/${value}`
+    }
+
+    validate() {
+        const value = this.getValue()
+        if (!value || value === '/') {
+            throw new Error('Defina um PATH XHTTP válido para configuração')
+        }
+    }
+}
+
 export class ConfigOpenVPN extends TextAreaFiled {
     constructor(payload) {
         super()

@@ -17,6 +17,11 @@
 - [x] App Layout atualizado
 - [x] Adicionado modo HYSTERIA, SSH_DNSTT
 - [x] Adicionado gerenciador simples de versões
+- [x] Adicionado runtime integrado para `SSH_XHTTP`, com validação de base APK e geração assinada
+
+## SSH_XHTTP
+
+O modo `SSH_XHTTP` agora é encaminhado para um runtime XHTTP real dentro da APK base, eliminando a falha `Invalid mode: SSH_XHTTP`. Os campos obrigatórios e o mapeamento de compatibilidade estão documentados em [docs/XHTTP.md](docs/XHTTP.md). A integração incorpora código de terceiros sob GPLv3; consulte [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) e [LICENSES/GPL-3.0.txt](LICENSES/GPL-3.0.txt) antes de redistribuir a APK.
 
 ## :rocket: Principais funções
 

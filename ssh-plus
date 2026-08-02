@@ -31,7 +31,7 @@ apt install -y curl git wget build-essential ca-certificates gnupg openjdk-17-jd
 echo -e "${CYAN}[2/10]${NC} Instalando Ferramentas de APK (Apktool & Signer)..."
 sudo wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O /usr/local/bin/apktool
 sudo chmod +x /usr/local/bin/apktool
-sudo wget https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar -O /usr/local/bin/apktool.jar
+sudo wget https://github.com/iBotPeaches/Apktool/releases/download/v3.0.3/apktool_3.0.3.jar -O /usr/local/bin/apktool.jar
 sudo chmod +x /usr/local/bin/apktool.jar
 sudo wget https://github.com/patrickfav/uber-apk-signer/releases/download/v1.3.0/uber-apk-signer-1.3.0.jar -O /usr/local/bin/uber-apk-signer.jar
 sudo chmod +x /usr/local/bin/uber-apk-signer.jar

@@ -7,7 +7,8 @@ import {
     ConfigServer, ConfigSni, ConfigTlsVersion, ConfigType, ConfigUdpPort,
     ConfigUrlCheckUser, ConfigUsername, ConfigUuid, ConfigV2ray, InputFiled,
     ConfigHyPort, ConfigHyObfs, ConfigHyInsecure, ConfigHyUpMbps, ConfigHyDownMbps, ConfigHyVersion,
-    ConfigDnsttKey, ConfigDnsttNameServer, ConfigDnsttServer
+    ConfigDnsttKey, ConfigDnsttNameServer, ConfigDnsttServer,
+    ConfigXhttpHost, ConfigXhttpPath
 } from "./fields.js"
 
 class ConfigForm {
@@ -128,25 +129,30 @@ class ConfigFormSshProxy extends ConfigFormSshDirect {
 class ConfigFormSshXhttp extends ConfigForm {
     constructor(config, categories) {
         super(config, categories);
-        this.sni = new ConfigSni(config?.config_payload?.sni || '');
         this.server = new ConfigServer(config?.server?.host || '');
         this.serverPort = new ConfigPort(config?.server?.port || 443);
-        this.proxy = new ConfigProxy(config?.proxy?.host || '');
-        this.proxyPort = new ConfigPort(config?.proxy?.port || 80);
+        this.sni = new ConfigSni(config?.config_payload?.sni || '', true);
+        this.xhttpHost = new ConfigXhttpHost(config?.proxy?.host || '');
+        this.xhttpPath = new ConfigXhttpPath(config?.config_payload?.payload || '/ssh');
         this.dns1 = new ConfigDns1(config?.dns_server?.dns1 || '8.8.8.8');
         this.dns2 = new ConfigDns2(config?.dns_server?.dns2 || '8.8.4.4');
         this.username = new ConfigUsername(config?.auth?.username || '');
         this.password = new ConfigPassword(config?.auth?.password || '');
-        this.tlsVersion = new ConfigTlsVersion(['TLSv1.3', 'TLSv1.2', 'TLSv1.1']);
-        this.tlsVersion.setSelected(config.tls_version);
+        this.tlsVersion = new ConfigTlsVersion(['TLSv1.3', 'TLSv1.2', 'TLSv1.1', 'NONE']);
+        this.tlsVersion.setSelected(config.tls_version || 'TLSv1.3');
         this.udpPort = new ConfigUdpPort(config.udp_ports || 7300);
     }
 
     toConfig() {
         const config = super.toConfig();
-        config.config_payload = { sni: this.sni.getValue() };
+        config.config_payload = {
+            sni: this.sni.getValue(),
+            payload: this.xhttpPath.getValue(),
+        };
         config.server = { host: this.server.getValue(), port: this.serverPort.getValue() };
-        config.proxy = { host: this.proxy.getValue(), port: this.proxyPort.getValue() };
+        // The legacy proxy object carries the XHTTP Host header. The port is kept
+        // for compatibility with the profile parcel consumed by the base APK.
+        config.proxy = { host: this.xhttpHost.getValue(), port: 80 };
         config.dns_server = { dns1: this.dns1.getValue(), dns2: this.dns2.getValue() };
         config.auth = { username: this.username.getValue(), password: this.password.getValue() };
         config.tls_version = this.tlsVersion.getSelected().value;
@@ -156,12 +162,12 @@ class ConfigFormSshXhttp extends ConfigForm {
 
     render() {
         const element = super.render();
-        element.insertBefore(this.createDivWithClass(this.sni.render(), this.tlsVersion.render()), element.childNodes[3]);
-        element.insertBefore(this.udpPort.render(), element.childNodes[4]);
-        element.insertBefore(this.createDivWithClass(this.username.render(), this.password.render()), element.childNodes[4]);
-        element.insertBefore(this.createDivWithClass(this.dns1.render(), this.dns2.render()), element.childNodes[4]);
-        element.insertBefore(this.createDivWithClass(this.server.render(), this.serverPort.render()), element.childNodes[4]);
-        element.insertBefore(this.createDivWithClass(this.proxy.render(), this.proxyPort.render()), element.childNodes[4]);
+        element.insertBefore(this.createDivWithClass(this.server.render(), this.serverPort.render()), element.childNodes[3]);
+        element.insertBefore(this.createDivWithClass(this.sni.render(), this.tlsVersion.render()), element.childNodes[4]);
+        element.insertBefore(this.createDivWithClass(this.xhttpHost.render(), this.xhttpPath.render()), element.childNodes[5]);
+        element.insertBefore(this.createDivWithClass(this.username.render(), this.password.render()), element.childNodes[6]);
+        element.insertBefore(this.createDivWithClass(this.dns1.render(), this.dns2.render()), element.childNodes[7]);
+        element.insertBefore(this.udpPort.render(), element.childNodes[8]);
         return element;
     }
 }

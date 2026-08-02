@@ -11,4 +11,11 @@ nginx/fullchain.pem
 nginx/privkey.pem
 Dockerfile
 apktool
-apktool.txtfrontend/public/apk/*.apk
+apktool.txt
+frontend/public/apk/*.apk
+apk_work/
+apk_output/
+base_decoded/
+scripts/base-xhttp-unsigned.apk
+scripts/xhttp-core-report.json
+scripts/__pycache__/

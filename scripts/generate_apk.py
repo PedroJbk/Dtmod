@@ -1,108 +1,152 @@
+#!/usr/bin/env python3
+"""Generate a branded DTunnel APK from the integrated XHTTP base.
+
+The generator changes only the panel endpoint domains. The XHTTP transport itself is
+part of ``base.apk`` and is verified after decoding, preventing a generated APK from
+silently accepting a profile mode without carrying the corresponding runtime.
+"""
+
+from __future__ import annotations
+
 import os
+import re
+import shutil
+import shlex
 import subprocess
 import sys
-import shutil
+from pathlib import Path
 
-def run_command(command):
-    print(f"Executando: {command}")
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    if process.returncode != 0:
-        print(f"Erro ao executar comando: {stderr.decode('utf-8')}")
-        return False
-    return True
+APKTOOL = os.environ.get("APKTOOL_BIN", "apktool")
+SIGNER_JAR = Path(os.environ.get("UBER_APK_SIGNER_JAR", "/usr/local/bin/uber-apk-signer.jar"))
 
-def generate_apk(new_domain, output_name="dtmod-custom.apk"):
-    # Caminhos relativos ao diretório do script
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    panel_dir = os.path.dirname(script_dir)
-    apk_path = os.path.join(script_dir, "base.apk")
-    work_dir = os.path.join(panel_dir, "apk_work")
-    output_dir = os.path.join(panel_dir, "apk_output")
+OLD_DOMAINS = (
+    "device.dtunnel.com.br",
+    "text.dtunnel.com.br",
+    "config.dtunnel.com.br",
+    "app.dtunnel.com.br",
+)
 
-    if not os.path.exists(apk_path):
-        print(f"Erro: APK base nao encontrado em {apk_path}")
-        return False
+RUNTIME_FILES = (
+    "smali_classes3/com/dtunnel/xhttp/XHttpLauncher.smali",
+    "smali_classes3/com/dragonssh/xhttpdemo/core/tunnel/XHttpProxy.smali",
+    "smali_classes3/com/dragonssh/xhttpdemo/core/XHttpSshService.smali",
+)
 
-    # 1. Limpar diretórios
-    for d in [work_dir, output_dir]:
-        if os.path.exists(d):
-            shutil.rmtree(d)
-    os.makedirs(output_dir, exist_ok=True)
 
-    # 2. Decompilar
-    print("Decompilando APK...")
-    if not run_command(f"apktool d {apk_path} -o {work_dir}"):
-        return False
+def run_command(command: list[str], *, cwd: Path | None = None) -> None:
+    print(f"Executando: {shlex.join(command)}")
+    completed = subprocess.run(command, cwd=cwd, capture_output=True, text=True)
+    if completed.returncode != 0:
+        if completed.stdout:
+            print(completed.stdout)
+        if completed.stderr:
+            print(completed.stderr, file=sys.stderr)
+        raise RuntimeError(f"Comando falhou com código {completed.returncode}")
 
-    # 3. Modificar domínios e injetar SSH_XHTTP
-    old_domains = [
-        "device.dtunnel.com.br",
-        "text.dtunnel.com.br",
-        "config.dtunnel.com.br",
-        "app.dtunnel.com.br"
-    ]
 
-    print(f"Alterando domínios para: {new_domain}")
-    for root, dirs, files in os.walk(work_dir):
-        for file in files:
-            if file.endswith(".smali"):
-                file_path = os.path.join(root, file)
-                try:
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        content = f.read()
-                    
-                    new_content = content
-                    
-                    # Injetar SSH_XHTTP na classe de modos (q4/j.smali)
-                    if "q4/j.smali" in file_path or "q4\\j.smali" in file_path:
-                        if "SSH_XHTTP" not in new_content:
-                            new_content = new_content.replace(
-                                '.field public static final k:Ljava/lang/String; = "HYSTERIA"',
-                                '.field public static final k:Ljava/lang/String; = "HYSTERIA"\n.field public static final l:Ljava/lang/String; = "SSH_XHTTP"'
-                            )
-                            print("Modo SSH_XHTTP adicionado à classe de modos!")
+def normalize_domain(value: str) -> str:
+    domain = value.strip()
+    domain = re.sub(r"^https?://", "", domain, flags=re.IGNORECASE).strip("/")
+    if not re.fullmatch(r"[A-Za-z0-9.-]+", domain) or "." not in domain:
+        raise ValueError("Informe somente um domínio válido, sem protocolo, porta ou caminho.")
+    return domain
 
-                    for old in old_domains:
-                        new_content = new_content.replace(old, new_domain)
-                        
-                    if new_content != content:
-                        with open(file_path, "w", encoding="utf-8") as f:
-                            f.write(new_content)
-                except Exception as e:
-                    continue
 
-    # 4. Recompilar
-    print("Recompilando APK...")
-    unsigned_apk = os.path.join(output_dir, "unsigned.apk")
-    if not run_command(f"apktool b {work_dir} -o {unsigned_apk}"):
-        return False
+def verify_xhttp_runtime(work_dir: Path) -> None:
+    missing = [str(path) for path in RUNTIME_FILES if not (work_dir / path).is_file()]
+    manager = work_dir / "smali/com/ssh/service/SshVpnServiceManager.smali"
+    dispatch_present = manager.is_file() and "XHttpLauncher;->start" in manager.read_text(encoding="utf-8")
 
-    # 5. Assinar
-    print("Assinando APK...")
-    signer_jar = "/usr/local/bin/uber-apk-signer.jar"
-    if not run_command(f"java -jar {signer_jar} --apks {unsigned_apk} --out {output_dir}"):
-        return False
+    if missing or not dispatch_present:
+        details = []
+        if missing:
+            details.append("arquivos ausentes: " + ", ".join(missing))
+        if not dispatch_present:
+            details.append("ponte de despacho SSH_XHTTP ausente")
+        raise RuntimeError(
+            "A APK base não contém o runtime XHTTP integrado (" + "; ".join(details) + "). "
+            "Atualize scripts/base.apk com a base XHTTP fornecida pelo repositório."
+        )
 
-    # 6. Mover para o destino final
-    # O uber-apk-signer gera um nome específico
-    signed_apk = os.path.join(output_dir, "unsigned-aligned-debugSigned.apk")
-    final_destination = os.path.join(os.path.expanduser("~"), output_name)
-    
-    if os.path.exists(signed_apk):
-        shutil.move(signed_apk, final_destination)
-        print(f"Sucesso! APK gerado em: {final_destination}")
-        # Limpeza
-        shutil.rmtree(work_dir)
-        shutil.rmtree(output_dir)
-        return True
-    else:
-        print("Erro: APK assinado nao encontrado.")
-        return False
+
+def replace_domains(work_dir: Path, new_domain: str) -> int:
+    replacements = 0
+    for smali_file in work_dir.glob("smali*/**/*.smali"):
+        content = smali_file.read_text(encoding="utf-8")
+        updated = content
+        for old_domain in OLD_DOMAINS:
+            updated = updated.replace(old_domain, new_domain)
+        if updated != content:
+            smali_file.write_text(updated, encoding="utf-8")
+            replacements += 1
+    return replacements
+
+
+def find_signed_apk(output_dir: Path) -> Path:
+    candidates = sorted(output_dir.glob("*-aligned-*-signed.apk"))
+    if not candidates:
+        candidates = sorted(output_dir.glob("*-aligned-debugSigned.apk"))
+    if not candidates:
+        candidates = sorted(output_dir.glob("*.apk"))
+    if not candidates:
+        raise RuntimeError("O assinador não produziu uma APK de saída.")
+    return candidates[-1]
+
+
+def generate_apk(new_domain: str, output_name: str = "dtmod-custom.apk") -> Path:
+    script_dir = Path(__file__).resolve().parent
+    panel_dir = script_dir.parent
+    apk_path = script_dir / "base.apk"
+    work_dir = panel_dir / "apk_work"
+    output_dir = panel_dir / "apk_output"
+
+    if not apk_path.is_file():
+        raise FileNotFoundError(f"APK base não encontrada: {apk_path}")
+    if not SIGNER_JAR.is_file():
+        raise FileNotFoundError(f"Assinador não encontrado: {SIGNER_JAR}")
+
+    for directory in (work_dir, output_dir):
+        if directory.exists():
+            shutil.rmtree(directory)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        print("Decompilando APK base...")
+        run_command([APKTOOL, "d", "-f", str(apk_path), "-o", str(work_dir)])
+        verify_xhttp_runtime(work_dir)
+
+        changed_files = replace_domains(work_dir, new_domain)
+        print(f"Domínio aplicado em {changed_files} arquivo(s) Smali.")
+
+        unsigned_apk = output_dir / "unsigned.apk"
+        print("Reconstruindo APK...")
+        run_command([APKTOOL, "b", str(work_dir), "-o", str(unsigned_apk)])
+
+        print("Assinando APK...")
+        run_command(["java", "-jar", str(SIGNER_JAR), "--apks", str(unsigned_apk), "--out", str(output_dir)])
+
+        final_destination = Path.home() / output_name
+        signed_apk = find_signed_apk(output_dir)
+        shutil.move(str(signed_apk), final_destination)
+        print(f"Sucesso: APK gerada em {final_destination}")
+        return final_destination
+    finally:
+        shutil.rmtree(work_dir, ignore_errors=True)
+        shutil.rmtree(output_dir, ignore_errors=True)
+
+
+def main() -> None:
+    if len(sys.argv) < 2:
+        print("Uso: python3 generate_apk.py <dominio-do-painel>")
+        raise SystemExit(1)
+
+    try:
+        domain = normalize_domain(sys.argv[1])
+        generate_apk(domain)
+    except Exception as error:
+        print(f"Erro: {error}", file=sys.stderr)
+        raise SystemExit(1)
+
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Uso: python3 generate_apk.py <seu-dominio.com>")
-        sys.exit(1)
-    domain = sys.argv[1].replace("http://", "").replace("https://", "").strip("/")
-    generate_apk(domain)
+    main()
