@@ -16,37 +16,29 @@ NC='\033[0m'
 # ============================================================
 PANEL_DIR=""
 
-# 1. Verificar se existe arquivo .install_dir (criado pelo ssh-plus)
 if [ -f "$HOME/Dtmod/.install_dir" ]; then
     PANEL_DIR="$(cat "$HOME/Dtmod/.install_dir")"
 elif [ -f "/root/Dtmod/.install_dir" ]; then
     PANEL_DIR="$(cat /root/Dtmod/.install_dir)"
 elif [ -f "$HOME/.install_dir" ]; then
     PANEL_DIR="$(cat "$HOME/.install_dir")"
-# 2. Verificar diretórios conhecidos
 elif [ -d "/root/Dtmod" ] && [ -f "/root/Dtmod/ecosystem.config.js" ]; then
     PANEL_DIR="/root/Dtmod"
 elif [ -d "$HOME/Dtmod" ] && [ -f "$HOME/Dtmod/ecosystem.config.js" ]; then
     PANEL_DIR="$HOME/Dtmod"
 else
-    # 3. Tentar resolver via symlink e verificar diretório real
     RESOLVED="$(readlink -f "$0" 2>/dev/null)"
     if [ -n "$RESOLVED" ] && [ -f "$(dirname "$RESOLVED")/ecosystem.config.js" ]; then
         PANEL_DIR="$(dirname "$RESOLVED")"
     fi
 fi
 
-# Validar que encontramos o diretório
 if [ -z "$PANEL_DIR" ] || [ ! -f "$PANEL_DIR/ecosystem.config.js" ]; then
     echo -e "${RED}Erro: Diretorio do painel nao encontrado!${NC}"
-    echo "Verifique se a instalacao foi concluida corretamente."
-    echo "Execute: wget -qO- https://raw.githubusercontent.com/PedroJbk/Dtmod/main/ssh-plus | bash"
     exit 1
 fi
 
 ENV_FILE="$PANEL_DIR/.env"
-
-# Exportar caminho para que pon/poff também usem
 export DTMOD_INSTALL_DIR="$PANEL_DIR"
 
 show_menu() {
@@ -60,7 +52,8 @@ show_menu() {
     echo -e "${CYAN}3.${NC} Reiniciar painel"
     echo -e "${CYAN}4.${NC} Ativar Auto backup"
     echo -e "${CYAN}5.${NC} Remover painel"
-    echo -e "${CYAN}6.${NC} Configurar porta do painel ${YELLOW}(Atual: $(grep '^PORT=' "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d ' ' || echo '3000'))${NC}"
+    echo -e "${CYAN}6.${NC} Gerar Aplicativo (APK)"
+    echo -e "${CYAN}7.${NC} Configurar porta do painel ${YELLOW}(Atual: $(grep '^PORT=' "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d ' ' || echo '3000'))${NC}"
     echo -e "${CYAN}0.${NC} Sair"
     echo ""
     echo -n -e "${GREEN}Escolha uma opcao: ${NC}"
@@ -101,7 +94,6 @@ while true; do
             ;;
         4)
             echo "Auto backup ativado."
-            echo "Um backup sera feito automaticamente diariamente as 3h da manha."
             (crontab -l 2>/dev/null; echo "0 3 * * * tar -czf $HOME/dtmod_backup_auto_\$(date +\%F).tar.gz -C $(dirname "$PANEL_DIR") $(basename "$PANEL_DIR")") | sort -u | crontab -
             echo -e "${GREEN}Auto backup configurado!${NC}"
             sleep 2
@@ -113,35 +105,58 @@ while true; do
             if [ "$confirm" = "s" ] || [ "$confirm" = "S" ]; then
                 pm2 delete DTunnel 2>/dev/null
                 pm2 save 2>/dev/null
-                # Remover atalhos
                 rm -f /usr/local/bin/menuop /usr/local/bin/pon /usr/local/bin/poff
                 echo -e "${RED}Painel removido!${NC}"
                 sleep 2
                 exit 0
-            else
-                echo "Cancelado."
             fi
-            sleep 1
             ;;
         6)
+            echo -e "${CYAN}--- GERADOR DE APLICATIVO ---${NC}"
+            
+            # Verificar dependências
+            if ! command -v java &> /dev/null || ! command -v apktool &> /dev/null; then
+                echo -e "${YELLOW}Instalando dependencias necessarias (Java, Apktool)...${NC}"
+                sudo apt update && sudo apt install -y openjdk-17-jdk-headless wget python3
+                sudo wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O /usr/local/bin/apktool
+                sudo chmod +x /usr/local/bin/apktool
+                sudo wget https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar -O /usr/local/bin/apktool.jar
+                sudo chmod +x /usr/local/bin/apktool.jar
+                sudo wget https://github.com/patrickfav/uber-apk-signer/releases/download/v1.3.0/uber-apk-signer-1.3.0.jar -O /usr/local/bin/uber-apk-signer.jar
+                sudo chmod +x /usr/local/bin/uber-apk-signer.jar
+            fi
+
+            echo -n "Digite o seu dominio (ex: meu-painel.com): "
+            read domain
+            
+            if [ -z "$domain" ]; then
+                echo -e "${RED}Dominio invalido!${NC}"
+            else
+                echo -e "${YELLOW}Iniciando geracao do APK para: $domain${NC}"
+                python3 "$PANEL_DIR/scripts/generate_apk.py" "$domain"
+                
+                if [ -f "/home/ubuntu/dtmod-custom.apk" ]; then
+                    mkdir -p "$PANEL_DIR/frontend/public/apk"
+                    mv "/home/ubuntu/dtmod-custom.apk" "$PANEL_DIR/frontend/public/apk/dtunnel-ssh.apk"
+                    echo -e "${GREEN}APK gerado com sucesso!${NC}"
+                    echo -e "Disponivel em: http://seu-ip:porta/apk/download/ssh"
+                elif [ -f "$HOME/dtmod-custom.apk" ]; then
+                    mkdir -p "$PANEL_DIR/frontend/public/apk"
+                    mv "$HOME/dtmod-custom.apk" "$PANEL_DIR/frontend/public/apk/dtunnel-ssh.apk"
+                    echo -e "${GREEN}APK gerado com sucesso!${NC}"
+                else
+                    echo -e "${RED}Erro ao gerar o APK. Verifique os logs acima.${NC}"
+                fi
+            fi
+            sleep 3
+            ;;
+        7)
             echo -n "Digite a nova porta (ex: 3000, 80): "
             read new_port
             if [[ "$new_port" =~ ^[0-9]+$ ]]; then
-                if [ ! -f "$ENV_FILE" ]; then
-                    cp "$PANEL_DIR/.env.example" "$ENV_FILE"
-                fi
-                # Atualizar porta no .env
-                if grep -q "^PORT=" "$ENV_FILE"; then
-                    sed -i "s/^PORT=.*/PORT=$new_port/" "$ENV_FILE"
-                else
-                    echo "PORT=$new_port" >> "$ENV_FILE"
-                fi
-                # Abrir porta no firewall se necessario
-                if command -v ufw &> /dev/null; then
-                    ufw allow "$new_port"/tcp 2>/dev/null
-                elif command -v iptables &> /dev/null; then
-                    iptables -I INPUT -p tcp --dport "$new_port" -j ACCEPT 2>/dev/null
-                fi
+                if [ ! -f "$ENV_FILE" ]; then cp "$PANEL_DIR/.env.example" "$ENV_FILE"; fi
+                sed -i "s/^PORT=.*/PORT=$new_port/" "$ENV_FILE" || echo "PORT=$new_port" >> "$ENV_FILE"
+                if command -v ufw &> /dev/null; then ufw allow "$new_port"/tcp 2>/dev/null; fi
                 echo -e "${GREEN}Porta alterada para $new_port. Reiniciando painel...${NC}"
                 cd "$PANEL_DIR" && "$PANEL_DIR/pon"
             else
