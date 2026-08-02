@@ -1,22 +1,19 @@
 #!/bin/bash
 # ============================================================
-# Script de Instalação - DTunnelMod
-# Instala o painel automaticamente com todas as dependências
+# Script de Instalacao - DTunnelMod
+# Instala o painel automaticamente com todas as dependencias
 # ============================================================
-
 # Cores para o terminal
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
-
 echo -e "${GREEN}==============================================${NC}"
 echo -e "${GREEN}    INSTALADOR AUTOMATICO - DTunnelMod        ${NC}"
 echo -e "${GREEN}==============================================${NC}"
 echo ""
-
-# Detectar usuário atual e definir diretório de instalação
+# Detectar usuario atual e definir diretorio de instalacao
 if [ "$(id -u)" -eq 0 ]; then
     INSTALL_DIR="/root/Dtmod"
     PANEL_USER="root"
@@ -24,18 +21,14 @@ else
     INSTALL_DIR="$HOME/Dtmod"
     PANEL_USER="$(whoami)"
 fi
-
 echo -e "${CYAN}[INFO]${NC} Usuario: $PANEL_USER"
 echo -e "${CYAN}[INFO]${NC} Diretorio de instalacao: $INSTALL_DIR"
 echo ""
-
-# Atualizar sistema e instalar dependências básicas
+# Atualizar sistema e instalar dependencias basicas
 echo -e "${CYAN}[1/9]${NC} Atualizando sistema e instalando dependencias..."
-apt update -y
-apt upgrade -y
+apt update -y && apt upgrade -y
 apt install -y curl git wget build-essential ca-certificates gnupg
-
-# Instalar Node.js 20.x se não existir
+# Instalar Node.js 20.x se nao existir
 echo -e "${CYAN}[2/9]${NC} Verificando Node.js..."
 if ! command -v node &> /dev/null; then
     echo "Instalando Node.js 20.x..."
@@ -45,8 +38,7 @@ if ! command -v node &> /dev/null; then
 else
     echo "Node.js ja esta instalado: $(node -v)"
 fi
-
-# Instalar PNPM se não existir
+# Instalar PNPM se nao existir
 echo -e "${CYAN}[3/9]${NC} Verificando PNPM..."
 if ! command -v pnpm &> /dev/null; then
     echo "Instalando PNPM..."
@@ -54,23 +46,22 @@ if ! command -v pnpm &> /dev/null; then
 else
     echo "PNPM ja esta instalado: $(pnpm -v)"
 fi
-
 # Instalar PM2 globalmente
 echo -e "${CYAN}[4/9]${NC} Instalando PM2..."
 npm install -g pm2
-
-# Clonar ou atualizar o repositório
+# Clonar ou atualizar o repositorio
 echo -e "${CYAN}[5/9]${NC} Preparando repositorio..."
-if [ ! -d "$INSTALL_DIR" ]; then
-    echo "Clonando repositorio para $INSTALL_DIR..."
-    git clone https://github.com/PedroJbk/Dtmod.git "$INSTALL_DIR"
-else
+if [ -d "$INSTALL_DIR" ]; then
     echo "Repositorio ja existe em $INSTALL_DIR, atualizando..."
-    cd "$INSTALL_DIR" && git pull
+    cd "$INSTALL_DIR" || { echo -e "${RED}Erro: Falha ao acessar $INSTALL_DIR${NC}"; exit 1; }
+    git fetch origin main
+    git reset --hard origin/main
+    git clean -fd
+else
+    echo "Clonando repositorio para $INSTALL_DIR..."
+    git clone https://github.com/PedroJbk/Dtmod.git "$INSTALL_DIR" || { echo -e "${RED}Erro: Falha ao clonar repositorio${NC}"; exit 1; }
+    cd "$INSTALL_DIR" || { echo -e "${RED}Erro: Falha ao acessar $INSTALL_DIR${NC}"; exit 1; }
 fi
-
-cd "$INSTALL_DIR"
-
 # Configurar .env
 echo -e "${CYAN}[6/9]${NC} Configurando ambiente..."
 if [ ! -f .env ]; then
@@ -79,25 +70,19 @@ if [ ! -f .env ]; then
 else
     echo -e "${YELLOW}.env ja existe, mantendo configuracao atual.${NC}"
 fi
-
-# Limpar node_modules e reinstallar (garante compatibilidade com schema atualizado)
+# Limpar node_modules e reinstallar
 echo -e "${CYAN}[7/9]${NC} Instalando dependencias do projeto..."
 rm -rf node_modules
-pnpm install
-
+pnpm install --no-frozen-lockfile || { echo -e "${RED}Erro: Falha ao instalar dependencias${NC}"; exit 1; }
 # Gerar Prisma Client + sincronizar banco de dados
-# IMPORTANTE: prisma generate DEVE vir antes de db push para garantir que
-# o client tenha os tipos corretos (incluindo is_admin)
 echo -e "${CYAN}[8/9]${NC} Configurando banco de dados..."
 npx prisma generate
 npx prisma db push
 npx prisma db seed
-
 # Compilar o projeto (clean rebuild)
 echo -e "${CYAN}[9/9]${NC} Compilando projeto..."
 rm -rf build
-npx tsc --build
-
+npx tsc --build || { echo -e "${RED}Erro: Falha ao compilar projeto${NC}"; exit 1; }
 # Configurar Firewall
 PORT=$(grep "^PORT=" .env | cut -d'=' -f2 | tr -d ' ' || echo "3000")
 if command -v ufw &> /dev/null; then
@@ -106,24 +91,23 @@ if command -v ufw &> /dev/null; then
 elif command -v iptables &> /dev/null; then
     iptables -I INPUT -p tcp --dport "$PORT" -j ACCEPT 2>/dev/null
 fi
-
-# Iniciar com PM2
-echo "Iniciando painel com PM2..."
+# Parar PM2 existente
+echo -e "${CYAN}Parando processos PM2 existentes...${NC}"
 pm2 delete DTunnel 2>/dev/null
-pm2 start ecosystem.config.js
+pm2 delete all 2>/dev/null
+# Iniciar com PM2 usando cwd absoluto
+echo "Iniciando painel com PM2..."
+pm2 start ecosystem.config.js --cwd "$INSTALL_DIR" || { echo -e "${RED}Erro: Falha ao iniciar com PM2${NC}"; exit 1; }
 pm2 save
 pm2 startup -u "$PANEL_USER" --hp "$HOME" 2>/dev/null
-
-# Criar links simbólicos com caminhos absolutos para /usr/local/bin
+# Criar links simbolicos com caminhos absolutos para /usr/local/bin
 echo "Criando atalhos globais..."
 chmod +x "$INSTALL_DIR/menuop" "$INSTALL_DIR/pon" "$INSTALL_DIR/poff"
 ln -sf "$INSTALL_DIR/menuop" /usr/local/bin/menuop
 ln -sf "$INSTALL_DIR/pon" /usr/local/bin/pon
 ln -sf "$INSTALL_DIR/poff" /usr/local/bin/poff
-
-# Salvar o diretório de instalação para os scripts usarem
+# Salvar o diretorio de instalacao para os scripts usarem
 echo "$INSTALL_DIR" > "$INSTALL_DIR/.install_dir"
-
 echo ""
 echo -e "${GREEN}==============================================${NC}"
 echo -e "${GREEN}  INSTALACAO CONCLUIDA COM SUCESSO!            ${NC}"
