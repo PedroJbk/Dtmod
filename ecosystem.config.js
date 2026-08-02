@@ -13,7 +13,7 @@ module.exports = {
   apps: [
     {
       name: 'DTunnel',
-      script: './build/index.js',
+      script: './build/src/index.js',
       instances,
       exec_mode: 'cluster',
     },
