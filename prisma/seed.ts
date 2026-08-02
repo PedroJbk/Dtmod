@@ -14,15 +14,17 @@ async function main() {
     where: { username: username.toLowerCase() },
     update: {
       password: passwordHash,
+      is_admin: true,
     },
     create: {
       username: username.toLowerCase(),
       password: passwordHash,
       email,
+      is_admin: true,
     },
   });
 
-  console.log({ message: 'Administrador configurado com sucesso', user: user.username });
+  console.log({ message: 'Super Administrador configurado com sucesso', user: user.username, is_admin: user.is_admin });
 }
 
 main()

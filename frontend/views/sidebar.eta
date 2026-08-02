@@ -39,6 +39,14 @@
         <span>Aplicativo</span>
       </a>
     </li>
+    <%~ if (it.user && it.user.is_admin) { %>
+    <li class="nav-item">
+      <a href="/users" target="_self" class="nav-link text-white <%~ it.active === 'users' ? 'active' : '' %>">
+        <i class="bi bi-people"></i>
+        <span>Usuarios</span>
+      </a>
+    </li>
+    <%~ } %>
     <li class="nav-item">
       <a href="/texts" target="_self" class="nav-link text-white <%~ it.active === 'texts' ? 'active' : '' %>">
         <i class="bi bi-file-text"></i>

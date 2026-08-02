@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR" translate="no" data-bs-theme="light">
+<head>
+  <base href="/" target="_blank">
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="google" content="notranslate">
+  <link rel="shortcut icon" href="/static/img/favicon.svg" />
+  <title>DTunnelMod - Gerenciar Usuarios</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <link rel="stylesheet" href="../static/css/styles.css">
+  <link rel="stylesheet" href="../static/css/bootstrap.css">
+  <link rel="stylesheet" href="../static/css/sidebar.css">
+  <link rel="stylesheet" href="../static/css/header.css">
+  <link href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css" rel="stylesheet" />
+  <script src="//code.jquery.com/jquery-2.1.0.min.js"></script>
+  <meta name="csrf-token" content="<%= it.csrfToken %>">
+</head>
+<body>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+  <main class="d-flex">
+    <%~ include("./sidebar", it) %>
+    <div class="container-fluid p-0">
+      <%~ include("./header", it) %>
+      <div class="content pt-1 overflow-auto">
+        <div class="main-content-container container-fluid px-4">
+          <div class="mb-2">
+            <h4 class="fw-bold">
+              <i class="bi bi-people me-2"></i> Gerenciamento de Usuarios
+            </h4>
+            <hr />
+          </div>
+
+          <!-- Botão Novo Usuário -->
+          <div class="mb-4">
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createUserModal">
+              <i class="bi bi-person-plus"></i> Novo Usuario
+            </button>
+          </div>
+
+          <!-- Tabela de Usuários -->
+          <div class="card shadow border border-0">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Usuario</th>
+                      <th>Email</th>
+                      <th>Tipo</th>
+                      <th>Configs</th>
+                      <th>Criado em</th>
+                      <th>Acoes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="usersTable">
+                    <tr>
+                      <td colspan="6" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                          <span class="visually-hidden">Carregando...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Criar Usuário -->
+  <div class="modal fade" id="createUserModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus"></i> Criar Novo Usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="createUserForm">
+            <div class="mb-3">
+              <label class="form-label">Nome de usuario</label>
+              <input type="text" class="form-control" id="newUsername" minlength="6" maxlength="20" required placeholder="Minimo 6 caracteres">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">E-mail</label>
+              <input type="email" class="form-control" id="newEmail" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Senha</label>
+              <input type="password" class="form-control" id="newPassword" minlength="6" maxlength="20" required placeholder="Minimo 6 caracteres">
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="newIsAdmin">
+              <label class="form-check-label" for="newIsAdmin">Administrador</label>
+              <div class="form-text">Se marcado, o usuario tera acesso total ao painel.</div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success" id="btnCreateUser">Criar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Usuário -->
+  <div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-pencil"></i> Editar Usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editUserForm">
+            <input type="hidden" id="editUserId">
+            <div class="mb-3">
+              <label class="form-label">Nome de usuario</label>
+              <input type="text" class="form-control" id="editUsername" minlength="6" maxlength="20" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">E-mail</label>
+              <input type="email" class="form-control" id="editEmail" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Nova Senha</label>
+              <input type="password" class="form-control" id="editPassword" minlength="6" maxlength="20" placeholder="Deixe vazio para manter a atual">
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="editIsAdmin">
+              <label class="form-check-label" for="editIsAdmin">Administrador</label>
+              <div class="form-text">Administradores tem acesso total ao painel.</div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btnEditUser">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../static/js/sidebar.js"></script>
+  <script src="../static/js/utils.js"></script>
+  <script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+    // Carregar usuarios
+    async function loadUsers() {
+      try {
+        const response = await fetch('/users', {
+          headers: { 'csrf-token': csrfToken }
+        });
+        const data = await response.json();
+
+        const tbody = document.getElementById('usersTable');
+        tbody.innerHTML = '';
+
+        if (data.users && data.users.length > 0) {
+          data.users.forEach(user => {
+            const tr = document.createElement('tr');
+            const createdDate = new Date(user.created_at).toLocaleDateString('pt-BR');
+            tr.innerHTML = `
+              <td>
+                <i class="bi bi-person-circle me-1"></i>
+                <strong>${user.username}</strong>
+              </td>
+              <td>${user.email}</td>
+              <td>
+                ${user.is_admin
+                  ? '<span class="badge bg-danger"><i class="bi bi-shield-check"></i> Admin</span>'
+                  : '<span class="badge bg-secondary"><i class="bi bi-person"></i> Usuario</span>'
+                }
+              </td>
+              <td><span class="badge bg-info">${user._count.AppConfig} configs</span></td>
+              <td>${createdDate}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditUser('${user.id}', '${user.username}', '${user.email}', ${user.is_admin})">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user.id}', '${user.username}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum usuario encontrado</td></tr>';
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('usersTable').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Erro ao carregar usuarios</td></tr>';
+      }
+    }
+
+    // Criar usuario
+    document.getElementById('btnCreateUser').addEventListener('click', async () => {
+      const username = document.getElementById('newUsername').value.trim();
+      const email = document.getElementById('newEmail').value.trim();
+      const password = document.getElementById('newPassword').value;
+      const is_admin = document.getElementById('newIsAdmin').checked;
+
+      if (!username || !email || !password) {
+        Swal.fire({ icon: 'warning', title: 'Atencao', text: 'Preencha todos os campos obrigatorios' });
+        return;
+      }
+
+      if (username.length < 6 || password.length < 6) {
+        Swal.fire({ icon: 'warning', title: 'Atencao', text: 'Usuario e senha devem ter pelo menos 6 caracteres' });
+        return;
+      }
+
+      try {
+        const response = await fetch('/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'csrf-token': csrfToken,
+          },
+          body: JSON.stringify({ username, email, password, is_admin }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          Swal.fire({ icon: 'success', title: 'Sucesso', text: data.message || 'Usuario criado com sucesso' });
+          bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
+          document.getElementById('createUserForm').reset();
+          loadUsers();
+        } else {
+          Swal.fire({ icon: 'error', title: 'Erro', text: data.error || 'Erro ao criar usuario' });
+        }
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de conexao' });
+      }
+    });
+
+    // Abrir modal de edicao
+    window.openEditUser = function(id, username, email, is_admin) {
+      document.getElementById('editUserId').value = id;
+      document.getElementById('editUsername').value = username;
+      document.getElementById('editEmail').value = email;
+      document.getElementById('editIsAdmin').checked = is_admin;
+      document.getElementById('editPassword').value = '';
+      new bootstrap.Modal(document.getElementById('editUserModal')).show();
+    };
+
+    // Editar usuario
+    document.getElementById('btnEditUser').addEventListener('click', async () => {
+      const id = document.getElementById('editUserId').value;
+      const username = document.getElementById('editUsername').value.trim();
+      const email = document.getElementById('editEmail').value.trim();
+      const password = document.getElementById('editPassword').value;
+      const is_admin = document.getElementById('editIsAdmin').checked;
+
+      if (!username || !email) {
+        Swal.fire({ icon: 'warning', title: 'Atencao', text: 'Preencha todos os campos obrigatorios' });
+        return;
+      }
+
+      if (username.length < 6) {
+        Swal.fire({ icon: 'warning', title: 'Atencao', text: 'Usuario deve ter pelo menos 6 caracteres' });
+        return;
+      }
+
+      const body = { username, email, is_admin };
+      if (password) body.password = password;
+
+      try {
+        const response = await fetch('/users/' + id, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'csrf-token': csrfToken,
+          },
+          body: JSON.stringify(body),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          Swal.fire({ icon: 'success', title: 'Sucesso', text: data.message || 'Usuario atualizado com sucesso' });
+          bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+          loadUsers();
+        } else {
+          Swal.fire({ icon: 'error', title: 'Erro', text: data.error || 'Erro ao atualizar usuario' });
+        }
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de conexao' });
+      }
+    });
+
+    // Deletar usuario
+    window.deleteUser = async function(id, username) {
+      const result = await Swal.fire({
+        title: 'Remover usuario?',
+        text: `Tem certeza que deseja remover o usuario "${username}"? Esta acao nao pode ser desfeita.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sim, remover',
+        cancelButtonText: 'Cancelar',
+      });
+
+      if (result.isConfirmed) {
+        try {
+          const response = await fetch('/users/' + id, {
+            method: 'DELETE',
+            headers: { 'csrf-token': csrfToken },
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            Swal.fire({ icon: 'success', title: 'Sucesso', text: data.message || 'Usuario removido com sucesso' });
+            loadUsers();
+          } else {
+            Swal.fire({ icon: 'error', title: 'Erro', text: data.error || 'Erro ao remover usuario' });
+          }
+        } catch (err) {
+          Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de conexao' });
+        }
+      }
+    };
+
+    // Carregar ao abrir a pagina
+    loadUsers();
+  </script>
+</body>
+</html>
