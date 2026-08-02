@@ -2,7 +2,7 @@ import path from 'path';
 import { eta } from '../http';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
-const pages = path.resolve(__dirname, '../../frontend/pages');
+const pages = path.resolve(process.cwd(), 'frontend', 'pages');
 
 export class Render {
   static async page(req: FastifyRequest, reply: FastifyReply, filename: string, options?: object) {

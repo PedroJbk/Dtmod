@@ -28,6 +28,11 @@ fi
 # Entrar na pasta do projeto (assume que já foi clonado ou está na pasta atual)
 cd "$(dirname "$0")"
 
+# Configurar .env se não existir
+if [ ! -f .env ]; then
+    cp .env.example .env
+fi
+
 # Instalar dependências do projeto
 pnpm install
 
@@ -51,7 +56,8 @@ ln -sf $(pwd)/menuop /usr/local/bin/menuop
 
 echo "---------------------------------------------------"
 echo "Instalação concluída!"
-echo "Acesse: http://$(curl -s https://api.ipify.org):3000"
+PORT=$(grep "^PORT=" .env | cut -d'=' -f2 || echo "3000")
+echo "Acesse: http://$(curl -s https://api.ipify.org):$PORT"
 echo "Usuário: Bk2026@12"
 echo "Senha: 2012@bk2520"
 echo "---------------------------------------------------"

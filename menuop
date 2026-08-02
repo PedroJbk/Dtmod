@@ -2,19 +2,29 @@
 
 # Cores
 GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
 NC='\033[0m'
+
+PANEL_DIR="/home/ubuntu/Dtmod"
+ENV_FILE="$PANEL_DIR/.env"
 
 show_menu() {
     clear
-    echo -e "${GREEN}Bem vindo ao painelMod menu${NC}"
+    echo -e "${GREEN}=======================================${NC}"
+    echo -e "${GREEN}      BEM VINDO AO DTUNNEL MOD         ${NC}"
+    echo -e "${GREEN}=======================================${NC}"
     echo ""
-    echo "1. Fazer backup"
-    echo "2. Restaurar backup"
-    echo "3. Reiniciar painel"
-    echo "4. Ativar Auto backup"
-    echo "5. Remover painel"
-    echo "0. Sair"
-    echo -n "> "
+    echo -e "${CYAN}1.${NC} Fazer backup"
+    echo -e "${CYAN}2.${NC} Restaurar backup"
+    echo -e "${CYAN}3.${NC} Reiniciar painel"
+    echo -e "${CYAN}4.${NC} Ativar Auto backup"
+    echo -e "${CYAN}5.${NC} Remover painel"
+    echo -e "${CYAN}6.${NC} Configurar porta do painel ${YELLOW}(Atual: $(grep "^PORT=" $ENV_FILE | cut -d'=' -f2 || echo "3000"))${NC}"
+    echo -e "${CYAN}0.${NC} Sair"
+    echo ""
+    echo -n -e "${GREEN}Escolha uma opção: ${NC}"
 }
 
 while true; do
@@ -23,9 +33,8 @@ while true; do
     case $opt in
         1)
             echo "Fazendo backup..."
-            # Lógica de backup (ex: zip da pasta ou dump do banco)
-            tar -czf /home/ubuntu/dtmod_backup_$(date +%F).tar.gz /home/ubuntu/Dtmod
-            echo "Backup concluído em /home/ubuntu/dtmod_backup_$(date +%F).tar.gz"
+            tar -czf /home/ubuntu/dtmod_backup_$(date +%F_%H-%M).tar.gz $PANEL_DIR
+            echo -e "${GREEN}Backup concluído em /home/ubuntu/dtmod_backup_$(date +%F_%H-%M).tar.gz${NC}"
             sleep 2
             ;;
         2)
@@ -33,7 +42,8 @@ while true; do
             sleep 2
             ;;
         3)
-            /home/ubuntu/Dtmod/pon
+            echo "Reiniciando painel..."
+            $PANEL_DIR/pon
             sleep 2
             ;;
         4)
@@ -41,17 +51,41 @@ while true; do
             sleep 2
             ;;
         5)
-            echo "Removendo painel..."
-            pm2 delete DTunnel
-            # rm -rf /home/ubuntu/Dtmod
+            echo -e "${RED}Removendo painel...${NC}"
+            pm2 delete DTunnel 2>/dev/null
             echo "Painel removido!"
+            sleep 2
             exit 0
+            ;;
+        6)
+            echo -n "Digite a nova porta (ex: 3000, 80): "
+            read new_port
+            if [[ "$new_port" =~ ^[0-9]+$ ]]; then
+                if [ ! -f "$ENV_FILE" ]; then
+                    cp "$PANEL_DIR/.env.example" "$ENV_FILE"
+                fi
+                # Atualizar porta no .env
+                sed -i "s/^PORT=.*/PORT=$new_port/" "$ENV_FILE"
+                
+                # Abrir porta no firewall se necessário
+                if command -v ufw &> /dev/null; then
+                    ufw allow $new_port/tcp
+                elif command -v iptables &> /dev/null; then
+                    iptables -I INPUT -p tcp --dport $new_port -j ACCEPT
+                fi
+                
+                echo -e "${GREEN}Porta alterada para $new_port. Reiniciando painel...${NC}"
+                $PANEL_DIR/pon
+            else
+                echo -e "${RED}Porta inválida!${NC}"
+            fi
+            sleep 2
             ;;
         0)
             exit 0
             ;;
         *)
-            echo "Opção inválida!"
+            echo -e "${RED}Opção inválida!${NC}"
             sleep 1
             ;;
     esac

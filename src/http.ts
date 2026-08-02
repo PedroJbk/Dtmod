@@ -8,8 +8,8 @@ import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import type { FastifyCookieOptions } from '@fastify/cookie';
 
-const dashboard = path.resolve(__dirname, '../frontend', 'public');
-const views = path.resolve(__dirname, '../frontend', 'views');
+const dashboard = path.resolve(process.cwd(), 'frontend', 'public');
+const views = path.resolve(process.cwd(), 'frontend', 'views');
 
 const fastify = Fastify({ ignoreTrailingSlash: true });
 export const eta = new Eta({ views });
