@@ -131,6 +131,8 @@ class ConfigFormSshXhttp extends ConfigForm {
         this.sni = new ConfigSni(config?.config_payload?.sni || '');
         this.server = new ConfigServer(config?.server?.host || '');
         this.serverPort = new ConfigPort(config?.server?.port || 443);
+        this.proxy = new ConfigProxy(config?.proxy?.host || '');
+        this.proxyPort = new ConfigPort(config?.proxy?.port || 80);
         this.dns1 = new ConfigDns1(config?.dns_server?.dns1 || '8.8.8.8');
         this.dns2 = new ConfigDns2(config?.dns_server?.dns2 || '8.8.4.4');
         this.username = new ConfigUsername(config?.auth?.username || '');
@@ -144,6 +146,7 @@ class ConfigFormSshXhttp extends ConfigForm {
         const config = super.toConfig();
         config.config_payload = { sni: this.sni.getValue() };
         config.server = { host: this.server.getValue(), port: this.serverPort.getValue() };
+        config.proxy = { host: this.proxy.getValue(), port: this.proxyPort.getValue() };
         config.dns_server = { dns1: this.dns1.getValue(), dns2: this.dns2.getValue() };
         config.auth = { username: this.username.getValue(), password: this.password.getValue() };
         config.tls_version = this.tlsVersion.getSelected().value;
@@ -158,6 +161,7 @@ class ConfigFormSshXhttp extends ConfigForm {
         element.insertBefore(this.createDivWithClass(this.username.render(), this.password.render()), element.childNodes[4]);
         element.insertBefore(this.createDivWithClass(this.dns1.render(), this.dns2.render()), element.childNodes[4]);
         element.insertBefore(this.createDivWithClass(this.server.render(), this.serverPort.render()), element.childNodes[4]);
+        element.insertBefore(this.createDivWithClass(this.proxy.render(), this.proxyPort.render()), element.childNodes[4]);
         return element;
     }
 }
