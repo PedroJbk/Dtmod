@@ -58,7 +58,7 @@ class CardDefault extends ComponentStyled {
     }
 
     setOnBtnApkDownloadClick(callback) {
-        //this.element.querySelector('.__apk_download').addEventListener('click', callback);
+        document.querySelector('.__apk_download').addEventListener('click', callback);
     }
 }
 

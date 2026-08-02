@@ -274,8 +274,6 @@ const setListener = (appConfigList) => {
 
     cardDefault.setOnBtnSyncClick(() => showAlertConfirm(() => appConfigList.notify('sync', null)));
 
-    const apkDownloadModal = new ApkDownloadModal();
-    cardDefault.setOnBtnApkDownloadClick(() => apkDownloadModal.show());
 
     //root.appendChild(cardDefault.element);
 
@@ -569,3 +567,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 main();
+// Listener do botão GERAR APK na página principal
+document.addEventListener('DOMContentLoaded', () => {
+    const exportBtn = document.querySelector('.export-config');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            const apkDownloadModal = new ApkDownloadModal();
+            apkDownloadModal.show();
+        });
+    }
+});
