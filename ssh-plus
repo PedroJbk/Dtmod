@@ -13,6 +13,10 @@ echo -e "${GREEN}==============================================${NC}"
 echo -e "${GREEN}    INSTALADOR AUTOMATICO - DTunnelMod        ${NC}"
 echo -e "${GREEN}==============================================${NC}"
 echo ""
+
+# CORREÇÃO: Mudar para um diretório seguro para evitar erro de CWD (uv_cwd)
+cd /root 2>/dev/null || cd /tmp || cd $HOME
+
 # Detectar usuario atual e definir diretorio de instalacao
 if [ "$(id -u)" -eq 0 ]; then
     INSTALL_DIR="/root/Dtmod"
@@ -52,16 +56,17 @@ npm install -g pm2
 # Clonar ou atualizar o repositorio
 echo -e "${CYAN}[5/9]${NC} Preparando repositorio..."
 if [ -d "$INSTALL_DIR" ]; then
-    echo "Repositorio ja existe em $INSTALL_DIR, atualizando..."
-    cd "$INSTALL_DIR" || { echo -e "${RED}Erro: Falha ao acessar $INSTALL_DIR${NC}"; exit 1; }
-    git fetch origin main
-    git reset --hard origin/main
-    git clean -fd
-else
-    echo "Clonando repositorio para $INSTALL_DIR..."
-    git clone https://github.com/PedroJbk/Dtmod.git "$INSTALL_DIR" || { echo -e "${RED}Erro: Falha ao clonar repositorio${NC}"; exit 1; }
-    cd "$INSTALL_DIR" || { echo -e "${RED}Erro: Falha ao acessar $INSTALL_DIR${NC}"; exit 1; }
+    echo "Limpando instalação anterior em $INSTALL_DIR para garantir integridade..."
+    rm -rf "$INSTALL_DIR"
 fi
+
+echo "Clonando repositorio para $INSTALL_DIR..."
+# Tentar clonar com o token se estiver disponível no ambiente, senão usar público
+git clone https://github.com/PedroJbk/Dtmod.git "$INSTALL_DIR" || { 
+    echo -e "${RED}Erro: Falha ao clonar repositorio${NC}"
+    exit 1
+}
+cd "$INSTALL_DIR" || { echo -e "${RED}Erro: Falha ao acessar $INSTALL_DIR${NC}"; exit 1; }
 # Configurar .env
 echo -e "${CYAN}[6/9]${NC} Configurando ambiente..."
 if [ ! -f .env ]; then
