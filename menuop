@@ -53,7 +53,10 @@ show_menu() {
     echo -e "${CYAN}4.${NC} Ativar Auto backup"
     echo -e "${CYAN}5.${NC} Remover painel"
     echo -e "${CYAN}6.${NC} Gerar Aplicativo (APK)"
-    echo -e "${CYAN}7.${NC} Configurar porta do painel ${YELLOW}(Atual: $(grep '^PORT=' "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d ' ' || echo '3000'))${NC}"
+    # Obter porta atual para exibição no menu
+    CURRENT_PORT=$(grep "^PORT=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d ' ')
+    [ -z "$CURRENT_PORT" ] && CURRENT_PORT="3000"
+    echo -e "${CYAN}7.${NC} Configurar porta do painel ${YELLOW}(Atual: $CURRENT_PORT)${NC}"
     echo -e "${CYAN}0.${NC} Sair"
     echo ""
     echo -n -e "${GREEN}Escolha uma opcao: ${NC}"
@@ -151,18 +154,86 @@ while true; do
             sleep 3
             ;;
         7)
-            echo -n "Digite a nova porta (ex: 3000, 80): "
+            # --- Opção 7: Configurar porta do painel ---
+            
+            # Obter porta atual para referência
+            OLD_PORT=$(grep "^PORT=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d ' ')
+            [ -z "$OLD_PORT" ] && OLD_PORT="3000"
+            echo -e "${CYAN}Porta atual: ${YELLOW}$OLD_PORT${NC}"
+            echo -e "${CYAN}Exemplo: 80, 3000, 8080${NC}"
+            echo ""
+            echo -n "Digite a nova porta: "
             read new_port
-            if [[ "$new_port" =~ ^[0-9]+$ ]]; then
-                if [ ! -f "$ENV_FILE" ]; then cp "$PANEL_DIR/.env.example" "$ENV_FILE"; fi
-                sed -i "s/^PORT=.*/PORT=$new_port/" "$ENV_FILE" || echo "PORT=$new_port" >> "$ENV_FILE"
-                if command -v ufw &> /dev/null; then ufw allow "$new_port"/tcp 2>/dev/null; fi
-                echo -e "${GREEN}Porta alterada para $new_port. Reiniciando painel...${NC}"
-                cd "$PANEL_DIR" && "$PANEL_DIR/pon"
+            
+            if [[ "$new_port" =~ ^[0-9]+$ ]] && [ "$new_port" -gt 0 ] && [ "$new_port" -le 65535 ]; then
+                # 1. Parar o painel completamente (remover do PM2)
+                echo -e "${YELLOW}Parando painel...${NC}"
+                pm2 delete DTunnel 2>/dev/null
+                pm2 save 2>/dev/null
+                sleep 1
+                
+                # 2. Verificar que não há processo preso na porta
+                CURRENT_PID=$(lsof -ti: "$new_port" 2>/dev/null | head -1)
+                if [ -n "$CURRENT_PID" ]; then
+                    echo -e "${YELLOW}Finalizando processo preso na porta $new_port (PID: $CURRENT_PID)...${NC}"
+                    kill -9 "$CURRENT_PID" 2>/dev/null
+                    sleep 1
+                fi
+                
+                # 3. Atualizar o .env com a nova porta
+                if [ ! -f "$ENV_FILE" ]; then
+                    cp "$PANEL_DIR/.env.example" "$ENV_FILE"
+                fi
+                
+                # Substituir PORT= existente OU adicionar se não existir
+                if grep -q "^PORT=" "$ENV_FILE" 2>/dev/null; then
+                    sed -i "s/^PORT=.*/PORT=$new_port/" "$ENV_FILE"
+                else
+                    echo "PORT=$new_port" >> "$ENV_FILE"
+                fi
+                
+                # Verificar que a porta foi realmente gravada
+                CHECK_PORT=$(grep "^PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d ' ')
+                if [ "$CHECK_PORT" != "$new_port" ]; then
+                    echo -e "${RED}Erro ao salvar porta no .env!${NC}"
+                    sleep 2
+                    continue
+                fi
+                
+                # 4. Configurar firewall: remover regra antiga, abrir nova
+                if command -v ufw &> /dev/null; then
+                    ufw delete allow "$OLD_PORT"/tcp 2>/dev/null
+                    ufw allow "$new_port"/tcp 2>/dev/null
+                fi
+                if command -v iptables &> /dev/null; then
+                    iptables -I INPUT -p tcp --dport "$new_port" -j ACCEPT 2>/dev/null
+                fi
+                
+                # 5. Reiniciar o painel com a nova porta
+                echo -e "${YELLOW}Reiniciando painel na porta $new_port...${NC}"
+                cd "$PANEL_DIR"
+                pm2 start ecosystem.config.js --cwd "$PANEL_DIR"
+                pm2 save
+                sleep 2
+                
+                # 6. Verificar se o painel está rodando na porta correta
+                ACTUAL_PORT=$(grep "^PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d ' ')
+                RUNNING_STATUS=$(pm2 show DTunnel 2>/dev/null | grep -i "status")
+                
+                if pm2 show DTunnel >/dev/null 2>&1; then
+                    echo -e "${GREEN}==============================================${NC}"
+                    echo -e "${GREEN}  Porta alterada com sucesso para: $new_port    ${NC}"
+                    echo -e "${GREEN}==============================================${NC}"
+                    echo -e "${CYAN}  Acesse: http://SEU-IP:$new_port              ${NC}"
+                    echo -e "${GREEN}==============================================${NC}"
+                else
+                    echo -e "${RED}Aviso: Painel nao iniciou corretamente. Verifique:${NC}"
+                    echo -e "${RED}  pm2 logs DTunnel${NC}"
+                fi
             else
-                echo -e "${RED}Porta invalida!${NC}"
+                echo -e "${RED}Porta invalida! Use numeros entre 1 e 65535.${NC}"
             fi
-            sleep 2
+            sleep 3
             ;;
         0)
             exit 0
