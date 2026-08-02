@@ -24,6 +24,7 @@
     "@fastify/view": "^8.2.0",
     "@prisma/client": "^6.17.1",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^16.3.1",
     "eta": "^3.2.0",
     "fastify": "^4.24.3",
