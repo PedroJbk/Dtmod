@@ -4,7 +4,7 @@ import AdminAuthentication from '../../middlewares/admin-auth';
 import { FastifyReply, FastifyRequest, RouteOptions } from 'fastify';
 
 export default {
-  url: '/users',
+  url: '/users_list',
   method: 'GET',
   onRequest: [AdminAuthentication.user],
   handler: async (req: FastifyRequest, reply: FastifyReply) => {

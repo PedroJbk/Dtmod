@@ -161,7 +161,7 @@
     // Carregar usuarios
     async function loadUsers() {
       try {
-        const response = await fetch('/users', {
+        const response = await fetch('/users_list', {
           headers: { 'csrf-token': csrfToken }
         });
         const data = await response.json();
