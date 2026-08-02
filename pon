@@ -1,0 +1,4 @@
+#!/bin/bash
+cd /home/ubuntu/Dtmod
+pm2 restart DTunnel || pm2 start ecosystem.config.js
+echo "Painel DTunnelMod ativado/reiniciado!"

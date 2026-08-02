@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Cores
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+show_menu() {
+    clear
+    echo -e "${GREEN}Bem vindo ao painelMod menu${NC}"
+    echo ""
+    echo "1. Fazer backup"
+    echo "2. Restaurar backup"
+    echo "3. Reiniciar painel"
+    echo "4. Ativar Auto backup"
+    echo "5. Remover painel"
+    echo "0. Sair"
+    echo -n "> "
+}
+
+while true; do
+    show_menu
+    read opt
+    case $opt in
+        1)
+            echo "Fazendo backup..."
+            # Lógica de backup (ex: zip da pasta ou dump do banco)
+            tar -czf /home/ubuntu/dtmod_backup_$(date +%F).tar.gz /home/ubuntu/Dtmod
+            echo "Backup concluído em /home/ubuntu/dtmod_backup_$(date +%F).tar.gz"
+            sleep 2
+            ;;
+        2)
+            echo "Restaurar backup não implementado ainda."
+            sleep 2
+            ;;
+        3)
+            /home/ubuntu/Dtmod/pon
+            sleep 2
+            ;;
+        4)
+            echo "Auto backup ativado (simulado)."
+            sleep 2
+            ;;
+        5)
+            echo "Removendo painel..."
+            pm2 delete DTunnel
+            # rm -rf /home/ubuntu/Dtmod
+            echo "Painel removido!"
+            exit 0
+            ;;
+        0)
+            exit 0
+            ;;
+        *)
+            echo "Opção inválida!"
+            sleep 1
+            ;;
+    esac
+done

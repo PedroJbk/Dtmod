@@ -44,6 +44,11 @@ pm2 start ecosystem.config.js
 pm2 save
 pm2 startup
 
+# Instalar comandos no sistema
+ln -sf $(pwd)/pon /usr/local/bin/pon
+ln -sf $(pwd)/poff /usr/local/bin/poff
+ln -sf $(pwd)/menuop /usr/local/bin/menuop
+
 echo "---------------------------------------------------"
 echo "Instalação concluída!"
 echo "Acesse: http://$(curl -s https://api.ipify.org):3000"
