@@ -1,63 +1,99 @@
 #!/bin/bash
 
+# Cores para o terminal
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+echo -e "${GREEN}Iniciando instalação do DTunnelMod...${NC}"
+
+# Definir diretório de instalação
+INSTALL_DIR="/root/Dtmod"
+# Se não estiver no root (ex: sandbox), usa home
+if [ "$USER" != "root" ]; then
+    INSTALL_DIR="$HOME/Dtmod"
+fi
+
 # Atualizar sistema e instalar dependências básicas
 apt update -y && apt upgrade -y
 apt install -y curl git wget build-essential
 
-# Instalar Node.js e PNPM se não existirem
+# Instalar Node.js 20.x se não existir
 if ! command -v node &> /dev/null; then
+    echo "Instalando Node.js..."
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
     apt install -y nodejs
 fi
 
+# Instalar PNPM se não existir
 if ! command -v pnpm &> /dev/null; then
+    echo "Instalando PNPM..."
     npm install -g pnpm
 fi
 
-# Instalar PM2 para gerenciar o processo
+# Instalar PM2 globalmente
+echo "Instalando PM2..."
 npm install -g pm2
 
-# Configurar Firewall (Abrir porta 3000)
-if command -v ufw &> /dev/null; then
-    ufw allow 3000/tcp
-    ufw reload
-elif command -v iptables &> /dev/null; then
-    iptables -I INPUT -p tcp --dport 3000 -j ACCEPT
+# Clonar ou atualizar o repositório
+if [ ! -d "$INSTALL_DIR" ]; then
+    echo "Clonando repositório..."
+    git clone https://github.com/PedroJbk/Dtmod.git "$INSTALL_DIR"
+else
+    echo "Repositório já existe, atualizando..."
+    cd "$INSTALL_DIR"
+    git pull
 fi
 
-# Entrar na pasta do projeto (assume que já foi clonado ou está na pasta atual)
-cd "$(dirname "$0")"
+cd "$INSTALL_DIR"
 
-# Configurar .env se não existir
+# Configurar .env
 if [ ! -f .env ]; then
     cp .env.example .env
 fi
 
 # Instalar dependências do projeto
+echo "Instalando dependências do projeto..."
 pnpm install
 
-# Gerar Prisma e Migrations
+# Gerar Prisma
+echo "Configurando banco de dados..."
 npx prisma db push
 npx prisma db seed
 
-# Compilar o projeto
+# Compilar o projeto usando npx para garantir que tsc seja encontrado
+echo "Compilando projeto..."
 npx tsc --build
 
+# Configurar Firewall
+PORT=$(grep "^PORT=" .env | cut -d'=' -f2 || echo "3000")
+if command -v ufw &> /dev/null; then
+    ufw allow $PORT/tcp
+    ufw reload
+elif command -v iptables &> /dev/null; then
+    iptables -I INPUT -p tcp --dport $PORT -j ACCEPT
+fi
+
 # Iniciar com PM2
+echo "Iniciando painel com PM2..."
 pm2 delete DTunnel 2>/dev/null
 pm2 start ecosystem.config.js
 pm2 save
 pm2 startup
 
-# Instalar comandos no sistema
-ln -sf $(pwd)/pon /usr/local/bin/pon
-ln -sf $(pwd)/poff /usr/local/bin/poff
-ln -sf $(pwd)/menuop /usr/local/bin/menuop
+# Criar links simbólicos com caminhos absolutos
+ln -sf "$INSTALL_DIR/pon" /usr/local/bin/pon
+ln -sf "$INSTALL_DIR/poff" /usr/local/bin/poff
+ln -sf "$INSTALL_DIR/menuop" /usr/local/bin/menuop
+
+# Dar permissão de execução
+chmod +x "$INSTALL_DIR/pon" "$INSTALL_DIR/poff" "$INSTALL_DIR/menuop"
 
 echo "---------------------------------------------------"
-echo "Instalação concluída!"
-PORT=$(grep "^PORT=" .env | cut -d'=' -f2 || echo "3000")
+echo -e "${GREEN}Instalação concluída com sucesso!${NC}"
 echo "Acesse: http://$(curl -s https://api.ipify.org):$PORT"
 echo "Usuário: Bk2026@12"
 echo "Senha: 2012@bk2520"
+echo "---------------------------------------------------"
+echo "Digite 'menuop' para gerenciar o painel."
 echo "---------------------------------------------------"

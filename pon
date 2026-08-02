@@ -1,4 +1,9 @@
 #!/bin/bash
-cd /home/ubuntu/Dtmod
+# Detectar diretório
+if [ -d "/root/Dtmod" ]; then
+    cd /root/Dtmod
+else
+    cd "$(dirname "$(readlink -f "$0")")"
+fi
 pm2 restart DTunnel || pm2 start ecosystem.config.js
 echo "Painel DTunnelMod ativado/reiniciado!"

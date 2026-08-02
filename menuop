@@ -7,7 +7,20 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-PANEL_DIR="/home/ubuntu/Dtmod"
+# Detectar diretório de instalação
+if [ -d "/root/Dtmod" ]; then
+    PANEL_DIR="/root/Dtmod"
+elif [ -d "$HOME/Dtmod" ]; then
+    PANEL_DIR="$HOME/Dtmod"
+else
+    # Tenta descobrir onde o script real está
+    PANEL_DIR="$(dirname "$(readlink -f "$0")")"
+    if [ ! -f "$PANEL_DIR/ecosystem.config.js" ]; then
+        echo -e "${RED}Erro: Diretório do painel não encontrado!${NC}"
+        exit 1
+    fi
+fi
+
 ENV_FILE="$PANEL_DIR/.env"
 
 show_menu() {
@@ -21,7 +34,7 @@ show_menu() {
     echo -e "${CYAN}3.${NC} Reiniciar painel"
     echo -e "${CYAN}4.${NC} Ativar Auto backup"
     echo -e "${CYAN}5.${NC} Remover painel"
-    echo -e "${CYAN}6.${NC} Configurar porta do painel ${YELLOW}(Atual: $(grep "^PORT=" $ENV_FILE | cut -d'=' -f2 || echo "3000"))${NC}"
+    echo -e "${CYAN}6.${NC} Configurar porta do painel ${YELLOW}(Atual: $(grep "^PORT=" "$ENV_FILE" | cut -d'=' -f2 || echo "3000"))${NC}"
     echo -e "${CYAN}0.${NC} Sair"
     echo ""
     echo -n -e "${GREEN}Escolha uma opção: ${NC}"
@@ -33,8 +46,8 @@ while true; do
     case $opt in
         1)
             echo "Fazendo backup..."
-            tar -czf /home/ubuntu/dtmod_backup_$(date +%F_%H-%M).tar.gz $PANEL_DIR
-            echo -e "${GREEN}Backup concluído em /home/ubuntu/dtmod_backup_$(date +%F_%H-%M).tar.gz${NC}"
+            tar -czf "$HOME/dtmod_backup_$(date +%F_%H-%M).tar.gz" "$PANEL_DIR"
+            echo -e "${GREEN}Backup concluído em $HOME/dtmod_backup_$(date +%F_%H-%M).tar.gz${NC}"
             sleep 2
             ;;
         2)
@@ -43,7 +56,8 @@ while true; do
             ;;
         3)
             echo "Reiniciando painel..."
-            $PANEL_DIR/pon
+            cd "$PANEL_DIR"
+            ./pon
             sleep 2
             ;;
         4)
@@ -75,7 +89,8 @@ while true; do
                 fi
                 
                 echo -e "${GREEN}Porta alterada para $new_port. Reiniciando painel...${NC}"
-                $PANEL_DIR/pon
+                cd "$PANEL_DIR"
+                ./pon
             else
                 echo -e "${RED}Porta inválida!${NC}"
             fi
