@@ -109,6 +109,60 @@ def update_dtunnelmod_json(work_dir: Path, new_domain: str) -> None:
         print(f"Aviso: não foi possível atualizar dtunnelmod.json: {e}")
 
 
+def fix_target_sdk_version(work_dir: Path) -> None:
+    """Corrige o targetSdkVersion no apktool.yml para 34 (Android 14) evitando crash."""
+    apktool_yml = work_dir / "apktool.yml"
+    if not apktool_yml.is_file():
+        print("Aviso: apktool.yml não encontrado, pulando correção de SDK.")
+        return
+
+    content = apktool_yml.read_text(encoding="utf-8")
+
+    # Corrigir targetSdkVersion para 34 se estiver acima de 34
+    # Isso é essencial para evitar crash em Android 14+ devido a restrições
+    # de segurança mais rígidas no SDK 35/36
+    def replace_sdk(match):
+        old_val = int(match.group(1))
+        if old_val > 34:
+            print(f"Corrigindo targetSdkVersion de {old_val} para 34...")
+            return f"  targetSdkVersion: 34"
+        return match.group(0)
+
+    content = re.sub(r"  targetSdkVersion: (\d+)", replace_sdk, content)
+    apktool_yml.write_text(content, encoding="utf-8")
+
+    # Também corrigir o platformBuildVersionCode no AndroidManifest.xml se necessário
+    manifest = work_dir / "AndroidManifest.xml"
+    if manifest.is_file():
+        manifest_content = manifest.read_text(encoding="utf-8")
+        # Verificar se há targetSdk explícito no manifest e corrigir
+        if 'targetSdkVersion="35"' in manifest_content or 'targetSdkVersion="36"' in manifest_content:
+            manifest_content = re.sub(r'targetSdkVersion="3[56]"', 'targetSdkVersion="34"', manifest_content)
+            manifest.write_text(manifest_content, encoding="utf-8")
+            print("targetSdkVersion corrigido no AndroidManifest.xml")
+
+
+def fix_foreground_service_type(work_dir: Path) -> None:
+    """Garante que foregroundServiceType=dataSync está declarado corretamente no manifest."""
+    manifest = work_dir / "AndroidManifest.xml"
+    if not manifest.is_file():
+        return
+
+    content = manifest.read_text(encoding="utf-8")
+
+    # Verificar se a permissão FOREGROUND_SERVICE_DATA_SYNC está presente
+    if 'android.permission.FOREGROUND_SERVICE_DATA_SYNC' not in content:
+        # Adicionar a permissão
+        content = re.sub(
+            r'(<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>)',
+            r'\1\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>',
+            content,
+            count=1
+        )
+        manifest.write_text(content, encoding="utf-8")
+        print("Permissão FOREGROUND_SERVICE_DATA_SYNC adicionada ao manifest")
+
+
 def find_signed_apk(output_dir: Path) -> Path:
     candidates = sorted(output_dir.glob("*-aligned-*-signed.apk"))
     if not candidates:
@@ -147,6 +201,12 @@ def generate_apk(new_domain: str, output_name: str = "dtmod-custom.apk") -> Path
 
         # Atualizar o dtunnelmod.json com a URL do painel
         update_dtunnelmod_json(work_dir, new_domain)
+
+        # Corrigir targetSdkVersion para evitar crash em Android 14+
+        fix_target_sdk_version(work_dir)
+
+        # Garantir permissões de foreground service
+        fix_foreground_service_type(work_dir)
 
         unsigned_apk = output_dir / "unsigned.apk"
         print("Reconstruindo APK...")
