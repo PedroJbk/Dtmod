@@ -21,7 +21,7 @@ export default {
             select: {
               AppConfig: true,
               Category: true,
-              Cdn: true,
+              cdn: true,
             },
           },
         },
