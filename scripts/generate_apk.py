@@ -16,34 +16,33 @@ def generate_apk(new_domain, output_name="dtmod-custom.apk"):
     # Caminhos relativos ao diretório do script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     panel_dir = os.path.dirname(script_dir)
-    
     apk_path = os.path.join(script_dir, "base.apk")
     work_dir = os.path.join(panel_dir, "apk_work")
     output_dir = os.path.join(panel_dir, "apk_output")
-    
+
     if not os.path.exists(apk_path):
         print(f"Erro: APK base nao encontrado em {apk_path}")
         return False
-    
+
     # 1. Limpar diretórios
     for d in [work_dir, output_dir]:
         if os.path.exists(d):
             shutil.rmtree(d)
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # 2. Decompilar
     print("Decompilando APK...")
     if not run_command(f"apktool d {apk_path} -o {work_dir}"):
         return False
 
-    # 3. Modificar domínios
+    # 3. Modificar domínios e injetar SSH_XHTTP
     old_domains = [
         "device.dtunnel.com.br",
         "text.dtunnel.com.br",
         "config.dtunnel.com.br",
         "app.dtunnel.com.br"
     ]
-    
+
     print(f"Alterando domínios para: {new_domain}")
     for root, dirs, files in os.walk(work_dir):
         for file in files:
@@ -54,9 +53,19 @@ def generate_apk(new_domain, output_name="dtmod-custom.apk"):
                         content = f.read()
                     
                     new_content = content
+                    
+                    # Injetar SSH_XHTTP na classe de modos (q4/j.smali)
+                    if "q4/j.smali" in file_path or "q4\\j.smali" in file_path:
+                        if "SSH_XHTTP" not in new_content:
+                            new_content = new_content.replace(
+                                '.field public static final k:Ljava/lang/String; = "HYSTERIA"',
+                                '.field public static final k:Ljava/lang/String; = "HYSTERIA"\n.field public static final l:Ljava/lang/String; = "SSH_XHTTP"'
+                            )
+                            print("Modo SSH_XHTTP adicionado à classe de modos!")
+
                     for old in old_domains:
                         new_content = new_content.replace(old, new_domain)
-                    
+                        
                     if new_content != content:
                         with open(file_path, "w", encoding="utf-8") as f:
                             f.write(new_content)
@@ -95,6 +104,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Uso: python3 generate_apk.py <seu-dominio.com>")
         sys.exit(1)
-    
     domain = sys.argv[1].replace("http://", "").replace("https://", "").strip("/")
     generate_apk(domain)
