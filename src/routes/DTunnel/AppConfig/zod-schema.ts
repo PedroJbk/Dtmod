@@ -11,6 +11,7 @@ const mode = z.enum([
   'OVPN_SSL_PROXY',
   'V2RAY',
   'HYSTERIA',
+  'SSH_XHTTP',
 ]);
 
 export const CategorySchema = z.object({

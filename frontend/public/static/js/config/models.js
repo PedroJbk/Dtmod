@@ -11,6 +11,7 @@ const Mode = {
     OVPN_SSL_PROXY: 'OVPN_SSL_PROXY',
     V2RAY: 'V2RAY',
     HYSTERIA: 'HYSTERIA',
+    SSH_XHTTP: 'SSH_XHTTP',
 }
 
 const Status = {
