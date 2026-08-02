@@ -30,13 +30,13 @@ echo -e "${CYAN}[INFO]${NC} Diretorio de instalacao: $INSTALL_DIR"
 echo ""
 
 # Atualizar sistema e instalar dependências básicas
-echo -e "${CYAN}[1/8]${NC} Atualizando sistema e instalando dependencias..."
+echo -e "${CYAN}[1/9]${NC} Atualizando sistema e instalando dependencias..."
 apt update -y
 apt upgrade -y
 apt install -y curl git wget build-essential ca-certificates gnupg
 
 # Instalar Node.js 20.x se não existir
-echo -e "${CYAN}[2/8]${NC} Verificando Node.js..."
+echo -e "${CYAN}[2/9]${NC} Verificando Node.js..."
 if ! command -v node &> /dev/null; then
     echo "Instalando Node.js 20.x..."
     mkdir -p /etc/apt/keyrings
@@ -47,7 +47,7 @@ else
 fi
 
 # Instalar PNPM se não existir
-echo -e "${CYAN}[3/8]${NC} Verificando PNPM..."
+echo -e "${CYAN}[3/9]${NC} Verificando PNPM..."
 if ! command -v pnpm &> /dev/null; then
     echo "Instalando PNPM..."
     npm install -g pnpm
@@ -56,11 +56,11 @@ else
 fi
 
 # Instalar PM2 globalmente
-echo -e "${CYAN}[4/8]${NC} Instalando PM2..."
+echo -e "${CYAN}[4/9]${NC} Instalando PM2..."
 npm install -g pm2
 
 # Clonar ou atualizar o repositório
-echo -e "${CYAN}[5/8]${NC} Preparando repositorio..."
+echo -e "${CYAN}[5/9]${NC} Preparando repositorio..."
 if [ ! -d "$INSTALL_DIR" ]; then
     echo "Clonando repositorio para $INSTALL_DIR..."
     git clone https://github.com/PedroJbk/Dtmod.git "$INSTALL_DIR"
@@ -72,7 +72,7 @@ fi
 cd "$INSTALL_DIR"
 
 # Configurar .env
-echo -e "${CYAN}[6/8]${NC} Configurando ambiente..."
+echo -e "${CYAN}[6/9]${NC} Configurando ambiente..."
 if [ ! -f .env ]; then
     cp .env.example .env
     echo -e "${GREEN}.env criado com sucesso.${NC}"
@@ -80,18 +80,22 @@ else
     echo -e "${YELLOW}.env ja existe, mantendo configuracao atual.${NC}"
 fi
 
-# Instalar dependências do projeto
-echo -e "${CYAN}[7/8]${NC} Instalando dependencias do projeto..."
+# Limpar node_modules e reinstallar (garante compatibilidade com schema atualizado)
+echo -e "${CYAN}[7/9]${NC} Instalando dependencias do projeto..."
+rm -rf node_modules
 pnpm install
 
-# Gerar Prisma
-echo -e "${CYAN}[8/8]${NC} Configurando banco de dados..."
+# Gerar Prisma Client + sincronizar banco de dados
+# IMPORTANTE: prisma generate DEVE vir antes de db push para garantir que
+# o client tenha os tipos corretos (incluindo is_admin)
+echo -e "${CYAN}[8/9]${NC} Configurando banco de dados..."
 npx prisma generate
 npx prisma db push
 npx prisma db seed
 
-# Compilar o projeto
-echo "Compilando projeto..."
+# Compilar o projeto (clean rebuild)
+echo -e "${CYAN}[9/9]${NC} Compilando projeto..."
+rm -rf build
 npx tsc --build
 
 # Configurar Firewall
