@@ -30,8 +30,12 @@
     "fastify": "^4.24.3",
     "jsonwebtoken": "^9.0.2",
     "prisma": "^6.17.1",
+
     "request": "^2.88.2",
     "zod": "^4.1.12"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

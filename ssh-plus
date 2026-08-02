@@ -33,6 +33,7 @@ pnpm install
 
 # Gerar Prisma e Migrations
 npx prisma db push
+npx prisma db seed
 
 # Compilar o projeto
 npx tsc --build
