@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DragonSSH XHTTP Example</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="stop">Stop</string>
+    <string name="channel_name_background">XHTTP SSH connection</string>
+    <string name="channel_description_background">Quiet status notification for the active XHTTP SSH tunnel</string>
+    <string name="starting_service_ssh">Starting XHTTP SSH</string>
+    <string name="stopping_service_ssh">Stopping XHTTP SSH</string>
+    <string name="state_starting">Starting</string>
+    <string name="state_connecting">Connecting</string>
+    <string name="state_auth">Authenticating</string>
+    <string name="state_auth_success">Authenticated</string>
+    <string name="state_get_config">Getting configuration</string>
+    <string name="state_assign_ip">Assigning IP address</string>
+    <string name="state_add_routes">Adding routes</string>
+    <string name="state_connected">Connected</string>
+    <string name="state_disconnected">Disconnected</string>
+    <string name="state_reconnecting">Reconnecting</string>
+    <string name="state_stopping">Stopping</string>
+    <string name="state_noprocess">Not running</string>
+    <string name="state_resolve">Resolving host</string>
+    <string name="state_tcp_connect">Connecting TCP</string>
+    <string name="state_nonetwork">Waiting for network</string>
+    <string name="state_waitconnectretry">Waiting %1$s seconds before reconnecting</string>
+    <string name="state_auth_pending">Waiting for authentication</string>
+    <string name="unknown_state">Unknown state</string>
+    <string name="log_server_banner">Server banner:</string>
+    <string name="log_conection_lost">Connection lost</string>
+    <string name="conectssh">SSH connection established</string>
+    <string name="stpssh">Stopping SSH</string>
+    <string name="compressg">SSH compression enabled</string>
+    <string name="dataerror">SSH authentication failed</string>
+    <string name="reconecti">Reconnecting…</string>
+    <string name="wnetwork">Waiting for network…</string>
+    <string name="failedvpn">Failed to start the Android VPN tunnel</string>
+    <string name="error_server_ip_invalid">Invalid XHTTP endpoint</string>
+    <string name="error_request_permission">VPN permission is required</string>
+</resources>

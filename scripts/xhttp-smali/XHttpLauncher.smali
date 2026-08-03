@@ -207,7 +207,11 @@
 
     move-result-object v0
 
-    invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->apply()V
+    # The XHTTP service runs in a dedicated process. Commit synchronously so that
+    # process always observes the profile written by this launcher.
+    invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->commit()Z
+
+    move-result v0
 
     # Keep DNS and UDP defaults aligned with the profile when they are supplied.
     const-string v0, "xhttp_demo_vpn"
@@ -291,7 +295,11 @@
 
     move-result-object v0
 
-    invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->apply()V
+    # The XHTTP service runs in a dedicated process. Commit synchronously so that
+    # process always observes the profile written by this launcher.
+    invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->commit()Z
+
+    move-result v0
 
     # The password is deliberately passed only as a service extra, not written to disk.
     new-instance v0, Landroid/content/Intent;
@@ -319,7 +327,21 @@
 
     move-result-object v0
 
+    :try_start_xhttp_service
     invoke-static {p0, v0}, Lb0/b;->e(Landroid/content/Context;Landroid/content/Intent;)V
+    :try_end_xhttp_service
+    .catch Ljava/lang/Exception; {:try_start_xhttp_service .. :try_end_xhttp_service} :catch_xhttp_service_start
+
+    return-void
+
+    :catch_xhttp_service_start
+    move-exception v0
+
+    invoke-virtual {v0}, Ljava/lang/Throwable;->toString()Ljava/lang/String;
+
+    move-result-object v0
+
+    invoke-static {v0}, Lcom/dragonssh/xhttpdemo/core/logger/SkStatus;->logError(Ljava/lang/String;)V
 
     return-void
 .end method
